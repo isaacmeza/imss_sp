@@ -53,6 +53,9 @@ vignettes/*.pdf
 /Data Private/
 /Data Private/**
 
+/Data Created/
+/Data Created/**
+
 # ipynb
 /.ipynb_checkpoints/
 /.ipynb_checkpoints/**
