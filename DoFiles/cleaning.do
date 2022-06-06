@@ -1,6 +1,25 @@
 
+********************
+version 17.0
+********************
+/* 
+/*******************************************************************************
+* Name of file:	
+* Author:	Isaac M
+* Machine:	Isaac M 											
+* Date of creation:	
+* Last date of modification: May. 24, 2022
+* Modifications: 
+* Files used:     
+		- 
+* Files created:  
 
-local path1 "C:\Users\isaac\Downloads\114886-V1\luminosity-master\luminosity-master\data\municipios"
+* Purpose: Cleaning luminosity data
+
+*******************************************************************************/
+*/
+
+local path1 "C:\Users\isaac\Dropbox\Statistics\P27\IMSS\Data Original\luminosity-master\luminosity-master\data\municipios"
 local folderList : dir "`path1'" dirs "*"
 
 * loop through folders
@@ -38,7 +57,7 @@ foreach folder of local folderList {
 
 
 
-local path1 "C:\Users\isaac\Downloads\114886-V1\luminosity-master\luminosity-master\data\municipios"
+local path1 "C:\Users\isaac\Dropbox\Statistics\P27\IMSS\Data Original\luminosity-master\luminosity-master\data\municipios"
 local folderList : dir "`path1'" dirs "*"
 
 * loop through folders
@@ -59,4 +78,4 @@ foreach folder of local folderList {
 }
 
 duplicates drop
-save  "C:\Users\isaac\Downloads\114886-V1\luminosity-master\luminosity.dta" , replace
+save  "C:\Users\isaac\Dropbox\Statistics\P27\IMSS\Data Created\luminosity.dta" , replace

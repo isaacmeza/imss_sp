@@ -5,7 +5,7 @@ set maxvar 8000
 set more off
 
 
-cd "C:\Users\isaac\Downloads\114886-V1\" ///CHANGE THIS TO YOUR DIRECTORE STRUCTURE
+cd "C:\Users\isaac\Dropbox\Statistics\P27\IMSS\" ///CHANGE THIS TO YOUR DIRECTORE STRUCTURE
 
 use "Data Original\employers.dta", clear
 joinby municipio year quarter using "Data Original\employees.dta", unm(b)
