@@ -23,7 +23,7 @@ version 17.0
 local vars sex eda n_hij e_con anios_esc hrsocup ingocup ing_x_hrs imssissste scian t_tra emp_ppal tue_ppal mh_fil2 mh_col sec_ins
 
 
-use "$directorio\Data Original\ENE_ENEU_ENOE\ENOE\sdemt319.dta"
+use "$directorio\Data Original\ENE_ENEU_ENOE\ENOE\sdemt319.dta", clear
 rename *, lower
 keep cd_a ent con v_sel n_hog h_mud n_ren mun fac `vars'
 gen int year = 2019
@@ -31,7 +31,7 @@ gen int quarter = 3
 tempfile temp319
 save `temp319'
 
-use "$directorio\Data Original\ENE_ENEU_ENOE\ENOE\sdemt419.dta"
+use "$directorio\Data Original\ENE_ENEU_ENOE\ENOE\sdemt419.dta", clear
 rename *, lower
 keep cd_a ent con v_sel n_hog h_mud n_ren mun fac `vars'
 gen int year = 2019

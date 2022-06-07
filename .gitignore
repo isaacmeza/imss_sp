@@ -61,8 +61,8 @@ vignettes/*.pdf
 /TOR/**
 
 # ENE_ENEU_ENOE
-/Data Original/ENE_ENEU_ENOE/
-/Data Original/ENE_ENEU_ENOE/**
+/Data Original/ENE_ENOE/
+/Data Original/ENE_ENOE/**
 
 # ipynb
 /.ipynb_checkpoints/

@@ -1,3 +1,24 @@
+
+********************
+version 17.0
+********************
+/* 
+/*******************************************************************************
+* Name of file:	
+* Author:	Isaac M
+* Machine:	Isaac M 											
+* Date of creation:	
+* Last date of modification: June. 06, 2022
+* Modifications: 
+* Files used:     
+		- 
+* Files created:  
+
+* Purpose: Comparison of formal and informal worker's characteristics
+
+*******************************************************************************/
+*/
+
 use "$directorio\Data Created\sdemt_enoe.dta", clear
 merge 1:1 cd_a ent con v_sel n_hog h_mud n_ren year quarter using "$directorio\Data Created\coe1t_enoe.dta", nogen
 
@@ -10,13 +31,14 @@ format date %tq
 
 *Covariates
 gen log_ing = log(ing_x_hrs+1)
+
 *Informal
 gen byte informal = (emp_ppal==1) if emp_ppal!=0 & !missing(emp_ppal)
 gen byte imss = inlist(imssissste,1) if imssissste!=0 & imssissste!=5 & !missing(imssissste)
 gen byte atencion_medica = inlist(imssissste,1,2,3) if imssissste!=0 & imssissste!=5 & !missing(imssissste)
 gen byte sat = (p4g==3) if p4g!=9 & !missing(p4g)
 gen byte informal_unidad = (tue_ppal==1) if tue_ppal!=0 & !missing(tue_ppal)
-gen byte informal_hausman = (mh_fil2==1) if mh_fil2!=0 & !missing(mh_fil2)
+gen byte informal_hussmann = (mh_fil2==1) if mh_fil2!=0 & !missing(mh_fil2)
 
 
 ***********************************
@@ -26,7 +48,7 @@ gen byte informal_hausman = (mh_fil2==1) if mh_fil2!=0 & !missing(mh_fil2)
 capture erase "$directorio/Tables/reg_results/characteristics_informal.xls"
 capture erase "$directorio/Tables/reg_results/characteristics_informal.txt"
 
-foreach var of varlist informal imss atencion_medica sat informal_unidad informal_hausman {
+foreach var of varlist informal imss atencion_medica sat informal_unidad informal_hussmann {
 	reghdfe `var' i.sex eda anios_esc hrsocup log_ing i.t_tra ibn.scian [fw = fac], absorb(i.municipio#i.date) vce(robust) 
 	su `var' [fw = fac] if e(sample) 
 	outreg2 using "$directorio/Tables/reg_results/characteristics_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality FE, "\checkmark")
@@ -66,15 +88,16 @@ foreach var in sex eda anios_esc hrsocup log_ing t_tra {
 }
 
 matrix colnames coef = `nmes'
-svmat coef, names(col) clear
+clear
+svmat coef, names(col) 
 gen qr = _n + yq(2005,1) - 1 if _n + yq(2005,1) -1 <= yq(2020,1)
 
 * Coefplot
-foreach var in sex /*eda anios_esc hrsocup log_ing t_tra*/ {
-	twoway (lpolyci sex_beta qr, clcolor(maroon%50) fintensity(inten70)) ///
-		(scatter sex_beta qr, connect(l) msymbol(Oh) msize(tiny) lcolor(navy%25)) ///
-		(rcap sex_hi sex_lo qr, msize(medlarge) color(navy)) ///
+foreach var in sex eda anios_esc hrsocup log_ing t_tra {
+	twoway (lpolyci `var'_beta qr, clcolor(maroon%50) fintensity(inten70)) ///
+		(scatter `var'_beta qr, connect(l) msymbol(Oh) msize(tiny) lcolor(navy%25)) ///
+		(rcap `var'_hi `var'_lo qr, msize(medlarge) color(navy)) ///
 		, legend(off) xlabel(180(12)240,format(%tq) labsize(small)) ytitle("Effect in informality : {&beta}{subscript:i}") ///
 		graphregion(color(white)) yline(0, lcolor(black%90))
-		
+	graph export "$directorio/Figuras/beta_`var'_informal.pdf", replace
 }

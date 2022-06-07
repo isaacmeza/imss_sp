@@ -23,7 +23,7 @@ version 17.0
 local vars p4g
 
 
-use "$directorio\Data Original\ENE_ENEU_ENOE\ENOE\coe1t319.dta"
+use "$directorio\Data Original\ENE_ENEU_ENOE\ENOE\coe1t319.dta", clear
 rename *, lower
 keep cd_a ent con v_sel n_hog h_mud n_ren `vars'
 gen int year = 2019
@@ -31,7 +31,7 @@ gen int quarter = 3
 tempfile temp319
 save `temp319'
 
-use "$directorio\Data Original\ENE_ENEU_ENOE\ENOE\coe1t419.dta"
+use "$directorio\Data Original\ENE_ENEU_ENOE\ENOE\coe1t419.dta", clear
 rename *, lower
 keep cd_a ent con v_sel n_hog h_mud n_ren `vars'
 gen int year = 2019
