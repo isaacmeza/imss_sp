@@ -41,11 +41,11 @@ gen log_ing = log(ing_x_hrs+1)
 
 *Informal 
 gen byte informal = (emp_ppal==1) if emp_ppal!=0 & !missing(emp_ppal)
-replace informal = (tue2==5) if tue2!=0 & ene==1
 gen byte noimss = !inlist(imssissste,1) if !inlist(imssissste,0,5,6) & !missing(imssissste)
 gen byte noatencion_medica = !inlist(imssissste,1,2,3) if !inlist(imssissste,0,5,6) & !missing(imssissste)
 gen byte nosat = (p4g!=3) if p4g!=9 & !missing(p4g)
 gen byte informal_hussmann = (mh_fil2==1) if mh_fil2!=0 & !missing(mh_fil2)
+replace informal_hussmann = (tue2==5) if tue2!=0 & ene==1
 
 *Formal/Informal/Desocupado
 gen byte class_trab = informal
