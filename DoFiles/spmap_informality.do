@@ -77,6 +77,7 @@ forvalues yr = 2000/2020 {
 	spmap informal using "$directorio\_aux\mexmunicoord.dta" if year==`yr', id(_ID) fcolor("`colors'")  ocolor(gs6 ..) osize(0.03 ..) ///
 	polygon(data("$directorio\_aux\mexstatecoord.dta") ocolor(white) osize(0.15)) ///
 	 ndfcolor(white) ndocolor(gs6 ..) ndsize(0.03 ..)  /// 
-	 clm(custom) clb(0(.05)1)  legend(size(2.5)) name(sp_`yr', replace)
-	 graph export "$directorio/Figuras/spmap_informal_`yr'.pdf", replace	
+	 clm(custom) clb(0(.05)1)  legend(size(2.5)) 
+	 graph export "$directorio/Figuras/spmap_informal_`yr'.pdf", replace
+	 graph export "$directorio/Figuras/spmap_informal_`yr'.png", replace
 }

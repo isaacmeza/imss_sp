@@ -51,6 +51,20 @@ gen byte informal_hussmann = (mh_fil2==1) if mh_fil2!=0 & !missing(mh_fil2)
 gen byte class_trab = informal
 replace class_trab = 2 if missing(informal) & clase1==1
 
+
+
+***********************************
+**** 			SS	  		  *****
+***********************************
+
+gen time = .
+replace time = 1 if inrange(year,2000,2004)
+replace time = 2 if inrange(year,2005,2010)
+replace time = 3 if inrange(year,2011,2020)
+
+iebaltab informal informal_hussmann noimss nosat [fw=fac], grpvar(class_trab) save("$directorio\Tables\reg_results\ss_shareinf.xlsx") total vce(robust)  pttest replace 
+
+
 ***********************************
 **** 			SS	  		  *****
 ***********************************
