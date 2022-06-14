@@ -14,11 +14,9 @@ gen log_ing = log(ing_x_hrs+1)
 gen byte informal = (emp_ppal==1) if emp_ppal!=0 & !missing(emp_ppal)
 gen byte noimss = !inlist(imssissste,1) if !inlist(imssissste,0,5,6) & !missing(imssissste)
 gen byte noatencion_medica = !inlist(imssissste,1,2,3) if !inlist(imssissste,0,5,6) & !missing(imssissste)
-gen byte nosat = (p4g!=3) if p4g!=9 & !missing(p4g)
 gen byte informal_hussmann = (mh_fil2==1) if mh_fil2!=0 & !missing(mh_fil2)
-replace informal_hussmann = (tue2==5) if tue2!=0 & ene==1
 
-keep informal noimss noatencion_medica nosat informal_hussmann sex eda anios_esc hrsocup log_ing t_tra date municipio scian
+keep informal noimss noatencion_medica informal_hussmann sex eda anios_esc hrsocup log_ing t_tra date municipio scian
 compress
 save "$directorio\_aux\reg.dta", replace
 

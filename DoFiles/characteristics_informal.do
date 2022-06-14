@@ -48,35 +48,100 @@ gen byte nosat = (p4g!=3) if p4g!=9 & !missing(p4g)
 gen byte informal_hussmann = (mh_fil2==1) if mh_fil2!=0 & !missing(mh_fil2)
 replace informal_hussmann = (tue2==5) if tue2!=0 & ene==1
 
-
+*Time intervals
+gen period = .
+replace period = 1 if inrange(year,2000,2001)
+replace period = 2 if inrange(year,2002,2004)
+replace period = 3 if inrange(year,2005,2010)
+replace period = 4 if inrange(year,2010,2020)
 
 ***********************************
 **** 		Regression		  *****
 ***********************************
 
+iebaltab sex eda anios_esc hrsocup log_ing t_tra [fw=fac], grpvar(period) save("$directorio\Tables\reg_results\meanvardeps_period.xlsx") vce(robust) replace 
+
+capture erase "$directorio/Tables/reg_results/determinants_informal.xls"
+capture erase "$directorio/Tables/reg_results/determinants_informal.txt"
+
+forvalues p = 1/2 {
+	reghdfe informal_hussmann i.sex eda anios_esc hrsocup log_ing i.t_tra [fw = fac] if period==`p', absorb(i.municipio#i.date) vce(robust) 
+	su informal_hussmann [fw = fac] if e(sample) 
+	outreg2 using "$directorio/Tables/reg_results/determinants_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality $\times$ Date FE, "\checkmark")
+	
+	reghdfe informal_hussmann i.sex eda anios_esc hrsocup log_ing i.t_tra [fw = fac] if period==`p', absorb(i.scian i.municipio#i.date) vce(robust) 
+	su informal_hussmann [fw = fac] if e(sample) 
+	outreg2 using "$directorio/Tables/reg_results/determinants_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality $\times$ Date FE, "\checkmark", Occupation FE, "\checkmark")	
+}
+
+forvalues p = 3/4 {
+	reghdfe informal i.sex eda anios_esc hrsocup log_ing i.t_tra [fw = fac] if period==`p', absorb(i.municipio#i.date) vce(robust) 
+	su informal [fw = fac] if e(sample) 
+	outreg2 using "$directorio/Tables/reg_results/determinants_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality $\times$ Date FE, "\checkmark")
+	
+	reghdfe informal i.sex eda anios_esc hrsocup log_ing i.t_tra [fw = fac] if period==`p', absorb(i.scian i.municipio#i.date) vce(robust) 
+	su informal [fw = fac] if e(sample) 
+	outreg2 using "$directorio/Tables/reg_results/determinants_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality $\times$ Date FE, "\checkmark", Occupation FE, "\checkmark")	
+}
+
+forvalues p = 1/4 {
+	reghdfe noimss i.sex eda anios_esc hrsocup log_ing i.t_tra [fw = fac] if period==`p', absorb(i.municipio#i.date) vce(robust) 
+	su noimss [fw = fac] if e(sample) 
+	outreg2 using "$directorio/Tables/reg_results/determinants_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality $\times$ Date FE, "\checkmark")
+	
+	reghdfe noimss i.sex eda anios_esc hrsocup log_ing i.t_tra [fw = fac] if period==`p', absorb(i.scian i.municipio#i.date) vce(robust) 
+	su noimss [fw = fac] if e(sample) 
+	outreg2 using "$directorio/Tables/reg_results/determinants_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality $\times$ Date FE, "\checkmark", Occupation FE, "\checkmark")	
+}
+
+********************************************************************************
+
 capture erase "$directorio/Tables/reg_results/characteristics_informal.xls"
 capture erase "$directorio/Tables/reg_results/characteristics_informal.txt"
 
-foreach var of varlist informal noimss noatencion_medica  {
-	reghdfe `var' i.sex eda anios_esc hrsocup log_ing i.t_tra ibn.scian [fw = fac] if ene==1, absorb(i.municipio#i.date) vce(robust) 
+
+	reghdfe informal i.sex eda anios_esc hrsocup log_ing i.t_tra [fw = fac] if ene==0, absorb(i.municipio#i.date) vce(robust) 
+	su informal [fw = fac] if e(sample) 
+	outreg2 using "$directorio/Tables/reg_results/characteristics_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality $\times$ Date FE, "\checkmark")
+	
+	reghdfe informal i.sex eda anios_esc hrsocup log_ing i.t_tra [fw = fac] if ene==0, absorb(i.scian i.municipio#i.date) vce(robust) 
+	su informal [fw = fac] if e(sample) 
+	outreg2 using "$directorio/Tables/reg_results/characteristics_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality $\times$ Date FE, "\checkmark", Occupation FE, "\checkmark")	
+	
+foreach var of varlist informal_hussmann noimss noatencion_medica  {
+	reghdfe `var' i.sex eda anios_esc hrsocup log_ing i.t_tra [fw = fac] if ene==1, absorb(i.municipio#i.date) vce(robust) 
 	su `var' [fw = fac] if e(sample) 
 	outreg2 using "$directorio/Tables/reg_results/characteristics_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality $\times$ Date FE, "\checkmark")
 	
-	reghdfe `var' i.sex eda anios_esc hrsocup log_ing i.t_tra ibn.scian [fw = fac] if ene==0, absorb(i.municipio#i.date) vce(robust) 
+	reghdfe `var' i.sex eda anios_esc hrsocup log_ing i.t_tra [fw = fac] if ene==1, absorb(i.scian i.municipio#i.date) vce(robust) 
+	su `var' [fw = fac] if e(sample) 
+	outreg2 using "$directorio/Tables/reg_results/characteristics_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality $\times$ Date FE, "\checkmark", Occupation FE, "\checkmark")	
+	
+	
+	reghdfe `var' i.sex eda anios_esc hrsocup log_ing i.t_tra [fw = fac] if ene==0, absorb(i.municipio#i.date) vce(robust) 
 	su `var' [fw = fac] if e(sample) 
 	outreg2 using "$directorio/Tables/reg_results/characteristics_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality $\times$ Date FE, "\checkmark")	
+	
+	reghdfe `var' i.sex eda anios_esc hrsocup log_ing i.t_tra [fw = fac] if ene==0, absorb(i.scian i.municipio#i.date) vce(robust) 
+	su `var' [fw = fac] if e(sample) 
+	outreg2 using "$directorio/Tables/reg_results/characteristics_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality $\times$ Date FE, "\checkmark", Occupation FE, "\checkmark")		
 }
-foreach var of varlist nosat  informal_hussmann {
-	reghdfe `var' i.sex eda anios_esc hrsocup log_ing i.t_tra ibn.scian [fw = fac] if ene==0, absorb(i.municipio#i.date) vce(robust) 
+
+foreach var of varlist nosat  {
+	reghdfe `var' i.sex eda anios_esc hrsocup log_ing i.t_tra [fw = fac] if ene==0, absorb(i.municipio#i.date) vce(robust) 
 	su `var' [fw = fac] if e(sample) 
 	outreg2 using "$directorio/Tables/reg_results/characteristics_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality $\times$ Date FE, "\checkmark")
+	
+	reghdfe `var' i.sex eda anios_esc hrsocup log_ing i.t_tra [fw = fac] if ene==0, absorb(i.scian i.municipio#i.date) vce(robust) 
+	su `var' [fw = fac] if e(sample) 
+	outreg2 using "$directorio/Tables/reg_results/characteristics_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality $\times$ Date FE, "\checkmark", Occupation FE, "\checkmark")		
 }
 
 
 ***********************************
 ****   Dynamic determinants   *****
 ***********************************
-foreach infvar in informal noimss noatencion_medica {
+foreach infvar in informal_hussmann noimss noatencion_medica {
 matrix coef = J(80,18,.)
 local i = 1
 forvalues dte = `=yq(2000,2)'/`=yq(2020,1)' {
@@ -128,7 +193,7 @@ restore
 }
 
 drop if ene==1
-foreach infvar in nosat informal_hussmann {
+foreach infvar in informal nosat {
 matrix coef = J(61,18,.)
 local i = 1
 forvalues dte = `=yq(2005,1)'/`=yq(2020,1)' {

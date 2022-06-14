@@ -50,7 +50,8 @@ replace informal_hussmann = (tue2==5) if tue2!=0 & ene==1
 
 *Formal/Informal/Desocupado
 gen byte class_trab = informal
-replace class_trab = 2 if missing(informal) & clase1==1
+replace class_trab = (tue2==5) if tue2!=0 & ene==1
+replace class_trab = 2 if missing(class_trab) & clase1==1
 
 
 ***********************************
@@ -66,8 +67,8 @@ gen formal_m = informal + formal
 gen zero = 0
 gen uno = 1
 
-twoway (rarea informal zero date, color(navy%20)) ///
-	(rarea formal_m informal date, color(maroon%20)) ///
+twoway (rarea informal zero date if date>=`=yq(2005,1)', color(navy%20)) ///
+	(rarea formal_m informal date if date>=`=yq(2005,1)', color(maroon%20)) ///
 	(rarea uno formal_m date, color(dkgreen%20)) ///
 	(line noimss date, lwidth(medthick) lcolor(blue)) ///
 	(line noatencion_medica date, lwidth(medthick) lcolor(red)) ///

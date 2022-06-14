@@ -19,7 +19,7 @@ version 17.0
 *******************************************************************************/
 */
 
-local path1 "C:\Users\isaac\Dropbox\Statistics\P27\IMSS\Data Original\luminosity-master\luminosity-master\data\municipios"
+local path1 "$directorio\Data Original\luminosity-master\luminosity-master\data\municipios"
 local folderList : dir "`path1'" dirs "*"
 
 * loop through folders
@@ -57,7 +57,7 @@ foreach folder of local folderList {
 
 
 
-local path1 "C:\Users\isaac\Dropbox\Statistics\P27\IMSS\Data Original\luminosity-master\luminosity-master\data\municipios"
+local path1 "$directorio\Data Original\luminosity-master\luminosity-master\data\municipios"
 local folderList : dir "`path1'" dirs "*"
 
 * loop through folders
@@ -78,4 +78,24 @@ foreach folder of local folderList {
 }
 
 duplicates drop
-save  "C:\Users\isaac\Dropbox\Statistics\P27\IMSS\Data Created\luminosity.dta" , replace
+
+*Interpolation
+gen int time = yq(year, 1)
+drop year
+format time %tq
+
+xtset cvemun time
+tsfill
+sort cvemun time
+
+by cvemun : ipolate mean_lum time, gen(mean_lum_)
+by cvemun : ipolate median_lum time, gen(median_lum_)
+drop mean_lum median_lum 
+rename (mean_lum_ median_lum_) (mean_lum median_lum)
+gen ent = floor(cvemun/1000)
+gen mun = cvemun-ent*1000
+gen year = yofd(dofq(time))
+gen quarter = quarter(dofq(time))
+drop time
+
+save  "$directorio\Data Created\luminosity.dta", replace
