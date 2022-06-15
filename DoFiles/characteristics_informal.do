@@ -59,7 +59,7 @@ replace period = 4 if inrange(year,2010,2020)
 **** 		Regression		  *****
 ***********************************
 
-iebaltab sex eda anios_esc hrsocup log_ing t_tra [fw=fac], grpvar(period) save("$directorio\Tables\reg_results\meanvardeps_period.xlsx") vce(robust) replace 
+iebaltab sex eda anios_esc hrsocup log_ing t_tra [fw=fac], grpvar(period) save("$directorio\Tables\reg_results\meanvardeps_period.xlsx") vce(robust) replace nottest
 
 capture erase "$directorio/Tables/reg_results/determinants_informal.xls"
 capture erase "$directorio/Tables/reg_results/determinants_informal.txt"

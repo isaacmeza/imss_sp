@@ -111,6 +111,9 @@ save  "$directorio\_aux\transition_master.dta", replace
 ***********************************************
 use  "$directorio\_aux\transition_master.dta", clear
 
+gen formal2 = (informal2==0) if !missing(informal2)
+gen imss2 = (noimss2==0) if !missing(noimss2)
+
 
 *Probability stack plot
 tab class_trab1 class_trab2 [fw = fac1], row matrow(row) matcol(col) matcell(MT)
@@ -133,7 +136,7 @@ graph export "$directorio/Figuras/transition_matrix_noimss.pdf", replace
 
 *Transition probabilities by municipality 
 	
-matrix beta_mun = J(1790,2,.)
+matrix beta_mun = J(1790,4,.)
 
 local j = 1
 levelsof municipio1, local(levels) 
@@ -144,9 +147,13 @@ foreach l of local levels {
 	}
 	qui su informal2 [fw = fac1] if informal1==1 & municipio1==`l', meanonly
 	cap matrix beta_mun[`j',1] = `r(mean)'
+	qui su formal2 [fw = fac1] if informal1==0 & municipio1==`l', meanonly
+	cap matrix beta_mun[`j',2] = `r(mean)'
 	
 	qui su noimss2 [fw = fac1] if noimss1==1 & municipio1==`l', meanonly
-	cap matrix beta_mun[`j',2] = `r(mean)'
+	cap matrix beta_mun[`j',3] = `r(mean)'
+	qui su imss2 [fw = fac1] if noimss1==0 & municipio1==`l', meanonly
+	cap matrix beta_mun[`j',4] = `r(mean)'	
 	noi _dots `j' 0
 	local j = `j' + 1
 }
@@ -156,17 +163,29 @@ sort beta_mun1
 cap drop n
 gen n = _n if !missing(beta_mun1)
 twoway (scatter beta_mun1 n, msymbol(Oh) msize(tiny) color(navy)) ///
-		(scatter beta_mun2 n, msymbol(Oh) msize(tiny) color(maroon)) ///
+		(scatter beta_mun3 n, msymbol(Oh) msize(tiny) color(maroon)) ///
 	, ytitle("Pr(X{subscript:t+1}=Informal | X{subscript:t}=Informal)") xtitle("Municipality (ascending order)") legend(order(1 "Informal" 2 "No IMSS") rows(1) pos(6))
-graph export "$directorio/Figuras/transition_prob_mun.pdf", replace
+graph export "$directorio/Figuras/transition_prob_mun_inf.pdf", replace
+
+sort beta_mun2 
+cap drop n
+gen n = _n if !missing(beta_mun2)
+twoway (scatter beta_mun2 n, msymbol(Oh) msize(tiny) color(navy)) ///
+		(scatter beta_mun4 n, msymbol(Oh) msize(tiny) color(maroon)) ///
+	, ytitle("Pr(X{subscript:t+1}=Formal | X{subscript:t}=Formal)") xtitle("Municipality (ascending order)") legend(order(1 "Formal" 2 "IMSS") rows(1) pos(6))
+graph export "$directorio/Figuras/transition_prob_mun_for.pdf", replace
+
 
 *Transition probabilities by occupation 
 graph hbar (mean) informal2 if scian1!=0 & informal1==1, over(scian1) ytitle("Pr(X{subscript:t+1}=Informal | X{subscript:t}=Informal)")
 graph export "$directorio/Figuras/transition_prob_occ_informal.pdf", replace
+graph hbar (mean) formal2 if scian1!=0 & informal1==0, over(scian1) ytitle("Pr(X{subscript:t+1}=Formal | X{subscript:t}=Formal)")
+graph export "$directorio/Figuras/transition_prob_occ_formal.pdf", replace
 
 graph hbar (mean) noimss2 if scian1!=0 & noimss1==1, over(scian1) ytitle("Pr(X{subscript:t+1}=No IMSS | X{subscript:t}=No IMSS)")
-graph export "$directorio/Figuras/transition_prob_occ_noimss.pdf", replace
-
+graph export "$directorio/Figuras/transition_prob_occ_formal.pdf", replace
+graph hbar (mean) imss2 if scian1!=0 & noimss1==0, over(scian1) ytitle("Pr(X{subscript:t+1}=IMSS | X{subscript:t}=IMSS)")
+graph export "$directorio/Figuras/transition_prob_occ_imss.pdf", replace
 *-------------------------------------------------------------------------------
 
 
@@ -178,18 +197,12 @@ graph export "$directorio/Figuras/transition_prob_occ_noimss.pdf", replace
 qui putexcel set "$directorio\Tables\reg_results\meanvardeps.xlsx", sheet("meanvardeps") modify	
 local j = 2
 foreach var of varlist eda1 anios_esc1 hrsocup1 log_ing1 mean_lum1 median_lum1 {
-	su `var' [fw = fac1], meanonly
+	qui su `var' [fw = fac1]
 	qui putexcel B`j'=`r(mean)'
+	qui putexcel C`j'=`r(sd)'
 	replace `var' = `var'-`r(mean)'
 	local j = `j' + 1
 }
-
-
-*Define transitions
-gen inf_inf = (informal1==1 & informal2==1) if !missing(informal1) & !missing(informal2) 
-gen inf_for = (informal1==1 & informal2==0) if !missing(informal1) & !missing(informal2)
-gen for_inf = (informal1==0 & informal2==1) if !missing(informal1) & !missing(informal2)
-gen for_for = (informal1==0 & informal2==0) if !missing(informal1) & !missing(informal2)
 
  
 eststo clear
@@ -214,7 +227,7 @@ twoway (lpolyci transition_prob_time1 qr, clcolor(navy%50) fintensity(inten70)) 
 		(scatter transition_prob_time1 qr, connect(line) msymbol(Oh) color(navy)) ///
 		(scatter transition_prob_time_imss1 qr, connect(line) msymbol(Oh) color(maroon)) ///
 		, xtitle("") ytitle("Pr(X{subscript:t+1}=Informal | X{subscript:t}=Informal)") xlabel(180(15)232,format(%tq) labsize(small)) legend(order(5 "Informal" 6 "No IMSS") pos(6) rows(1))
-graph export "$directorio/Figuras/transition_prob_time.pdf", replace
+graph export "$directorio/Figuras/transition_prob_time_inf.pdf", replace
 
 
 
@@ -224,4 +237,58 @@ eststo : reghdfe noimss2 ibn.date1 2.sex1 eda1 anios_esc1 hrsocup1 log_ing1 2.t_
 eststo : reghdfe informal2 ibn.date1 2.sex1 eda1 anios_esc1 hrsocup1 log_ing1 2.t_tra1 median_lum1 [fw = fac1] if informal1==1, absorb(scian1 municipio1) vce(robust)
 eststo : reghdfe noimss2 ibn.date1 2.sex1 eda1 anios_esc1 hrsocup1 log_ing1 2.t_tra1 median_lum1 [fw = fac1] if noimss1==1, absorb(scian1 municipio1) vce(robust)
 
-esttab using "$directorio/Tables/reg_results/transition_prob_reg.csv", se r2 ${star} b(a2)  replace keep(2.sex1 eda1 anios_esc1 hrsocup1 log_ing1 2.t_tra1 median_lum1)
+esttab using "$directorio/Tables/reg_results/transition_prob_reg_inf.csv", se r2 ${star} b(a2)  replace keep(2.sex1 eda1 anios_esc1 hrsocup1 log_ing1 2.t_tra1 median_lum1)
+
+
+*-------------------------------------------------------------------------------
+*-------------------------------------------------------------------------------
+*-------------------------------------------------------------------------------
+
+
+eststo clear
+*For computational purposes since we are only interested in the point estimate we use
+eststo : reg formal2 ibn.date1 2.sex1 eda1 anios_esc1 hrsocup1 log_ing1 2.t_tra1 median_lum1 [fw = fac1] if informal1==0, nocons vce(robust)
+*instead of
+*reg informal2 1.informal1#ibn.date1 2.sex1#ibn.date1 ... [fw = fac1], nocons
+matrix transition_prob_time = e(b)'
+
+eststo : reg imss2 ibn.date1 2.sex1 eda1 anios_esc1 hrsocup1 log_ing1 2.t_tra1 median_lum1 [fw = fac1] if noimss1==0, nocons vce(robust)
+matrix transition_prob_time_imss = e(b)'
+
+svmat transition_prob_time
+svmat transition_prob_time_imss
+gen qr = _n + yq(2005,1) - 1 if _n + yq(2005,1) -1 <= yq(2018,1)
+replace transition_prob_time1 = . if missing(qr)
+replace transition_prob_time_imss1 = . if missing(qr)
+
+
+twoway (lpolyci transition_prob_time1 qr, clcolor(navy%50) fintensity(inten70)) ///
+		(lpolyci transition_prob_time_imss1 qr, clcolor(maroon%50) fintensity(inten70)) ///
+		(scatter transition_prob_time1 qr, connect(line) msymbol(Oh) color(navy)) ///
+		(scatter transition_prob_time_imss1 qr, connect(line) msymbol(Oh) color(maroon)) ///
+		, xtitle("") ytitle("Pr(X{subscript:t+1}=Formal | X{subscript:t}=Formal)") xlabel(180(15)232,format(%tq) labsize(small)) legend(order(5 "Formal" 6 "IMSS") pos(6) rows(1))
+graph export "$directorio/Figuras/transition_prob_time_for.pdf", replace
+
+
+
+eststo : reghdfe formal2 ibn.date1 2.sex1 eda1 anios_esc1 hrsocup1 log_ing1 2.t_tra1 median_lum1 [fw = fac1] if informal1==0, nocons absorb(municipio1) vce(robust)
+eststo : reghdfe imss2 ibn.date1 2.sex1 eda1 anios_esc1 hrsocup1 log_ing1 2.t_tra1 median_lum1 [fw = fac1] if noimss1==0, nocons absorb(municipio1) vce(robust)
+
+eststo : reghdfe formal2 ibn.date1 2.sex1 eda1 anios_esc1 hrsocup1 log_ing1 2.t_tra1 median_lum1 [fw = fac1] if informal1==0, absorb(scian1 municipio1) vce(robust)
+eststo : reghdfe imss2 ibn.date1 2.sex1 eda1 anios_esc1 hrsocup1 log_ing1 2.t_tra1 median_lum1 [fw = fac1] if noimss1==0, absorb(scian1 municipio1) vce(robust)
+
+esttab using "$directorio/Tables/reg_results/transition_prob_reg_for.csv", se r2 ${star} b(a2)  replace keep(2.sex1 eda1 anios_esc1 hrsocup1 log_ing1 2.t_tra1 median_lum1)
+
+
+***********************************************
+**** 	Characteristics switchers		  *****
+***********************************************
+
+*Define transitions
+gen inf_inf = (informal1==1 & informal2==1) if !missing(informal1) & !missing(informal2) 
+gen inf_for = (informal1==1 & informal2==0) if !missing(informal1) & !missing(informal2)
+gen for_inf = (informal1==0 & informal2==1) if !missing(informal1) & !missing(informal2)
+gen for_for = (informal1==0 & informal2==0) if !missing(informal1) & !missing(informal2)
+
+
+reg inf_for ibn.date1 2.sex1 eda1 anios_esc1 hrsocup1 log_ing1 2.t_tra1 median_lum1 median_lum2 i.scian1 [fw = fac1] 
