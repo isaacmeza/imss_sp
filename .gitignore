@@ -56,13 +56,12 @@ vignettes/*.pdf
 /Data Created/
 /Data Created/**
 
+/Data Original/
+/Data Original/**
+
 # TOR
 /TOR/
 /TOR/**
-
-# ENE_ENEU_ENOE
-/Data Original/ENE_ENOE/
-/Data Original/ENE_ENOE/**
 
 # ipynb
 /.ipynb_checkpoints/

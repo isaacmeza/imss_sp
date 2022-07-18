@@ -58,7 +58,7 @@ foreach qr in 2 3 4 {
 	replace scian = 32 if inlist(p5b,99)
 	drop p5b
 
-	label define scian 23 "Agropecuario" 24 "Mineria" 25 "Industria Manufacturera" 26 "Construccion" 27 "Electricidad, Gas y Agua" 28 "Comercio, Restaurantes y Hoteles" 29 "Transporte Almacenamiento y Comunicaciones" 30 "Servicios Financieros" 31 "Servicios Comunales, Sociales y Personales" 32 "Insuficientemente Especificado"
+	label define scian 23 "Agriculture & Livestock" 24 "Mining" 25 "Manufacturing" 26 "Construction" 27 "Utilities" 28 "Retail, restaurants & hotels" 29 "Transportation, Storage & communication" 30 "Financial services" 31 "Personal & social services" 32 "Insufficiently specified"
 	label values scian scian
 
 	compress
@@ -104,7 +104,7 @@ foreach year in 01 02 03 04 {
 		replace scian = 32 if inlist(p5b,99)
 		drop p5b
 
-		label define scian 23 "Agropecuario" 24 "Mineria" 25 "Industria Manufacturera" 26 "Construccion" 27 "Electricidad, Gas y Agua" 28 "Comercio, Restaurantes y Hoteles" 29 "Transporte Almacenamiento y Comunicaciones" 30 "Servicios Financieros" 31 "Servicios Comunales, Sociales y Personales" 32 "Insuficientemente Especificado"
+		label define scian 23 "Agriculture & Livestock" 24 "Mining" 25 "Manufacturing" 26 "Construction" 27 "Utilities" 28 "Retail, restaurants & hotels" 29 "Transportation, Storage & communication" 30 "Financial services" 31 "Personal & social services" 32 "Insufficiently specified"
 		label values scian scian
 
 		compress

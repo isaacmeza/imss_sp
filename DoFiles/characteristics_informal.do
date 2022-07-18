@@ -7,9 +7,9 @@ version 17.0
 * Name of file:	
 * Author:	Isaac M
 * Machine:	Isaac M 											
-* Date of creation:	
-* Last date of modification: June. 06, 2022
-* Modifications: 
+* Date of creation:	June. 06, 2022
+* Last date of modification: June. 15, 2022
+* Modifications: Keep INEGI NO IMSS & NO SAT definitions of informality
 * Files used:     
 		- 
 * Files created:  
@@ -27,7 +27,7 @@ append using "$directorio\Data Created\ene.dta", gen(ene)
 use "$directorio\_aux\master.dta", clear
 
 label copy scian new_scian, replace
-label define new_scian 23 "Agropecuario" 24 "Mineria" 25 "Industria Manufacturera" 26 "Construccion" 27 "Electricidad, Gas y Agua" 28 "Comercio, Restaurantes y Hoteles" 29 "Transporte Almacenamiento y Comunicaciones" 30 "Servicios Financieros" 31 "Servicios Comunales, Sociales y Personales" 32 "Insuficientemente Especificado", add
+label define new_scian 23 "Agriculture & Livestock" 24 "Mining" 25 "Manufacturing" 26 "Construction" 27 "Utilities" 28 "Retail, restaurants & hotels" 29 "Transportation, Storage & communication" 30 "Financial services" 31 "Personal & social services" 32 "Insufficiently specified", add
 label values scian new_scian
 
 *Municipality
@@ -43,108 +43,56 @@ gen log_ing = log(ing_x_hrs+1)
 *Informal 
 gen byte informal = (emp_ppal==1) if emp_ppal!=0 & !missing(emp_ppal)
 gen byte noimss = !inlist(imssissste,1) if !inlist(imssissste,0,5,6) & !missing(imssissste)
-gen byte noatencion_medica = !inlist(imssissste,1,2,3) if !inlist(imssissste,0,5,6) & !missing(imssissste)
 gen byte nosat = (p4g!=3) if p4g!=9 & !missing(p4g)
-gen byte informal_hussmann = (mh_fil2==1) if mh_fil2!=0 & !missing(mh_fil2)
-replace informal_hussmann = (tue2==5) if tue2!=0 & ene==1
 
 *Time intervals
 gen period = .
-replace period = 1 if inrange(year,2000,2001)
-replace period = 2 if inrange(year,2002,2004)
-replace period = 3 if inrange(year,2005,2010)
-replace period = 4 if inrange(year,2010,2020)
+replace period = 1 if inrange(year,2000,2004)
+replace period = 2 if inrange(year,2005,2010)
+replace period = 3 if inrange(year,2010,2015)
 
 ***********************************
 **** 		Regression		  *****
 ***********************************
 
-iebaltab sex eda anios_esc hrsocup log_ing t_tra [fw=fac], grpvar(period) save("$directorio\Tables\reg_results\meanvardeps_period.xlsx") vce(robust) replace nottest
+iebaltab sex eda anios_esc t_tra [fw=fac], grpvar(period) save("$directorio\Tables\reg_results\meanvardeps_period.xlsx") vce(robust) replace nottest
 
 capture erase "$directorio/Tables/reg_results/determinants_informal.xls"
 capture erase "$directorio/Tables/reg_results/determinants_informal.txt"
 
-forvalues p = 1/2 {
-	reghdfe informal_hussmann i.sex eda anios_esc hrsocup log_ing i.t_tra [fw = fac] if period==`p', absorb(i.municipio#i.date) vce(robust) 
-	su informal_hussmann [fw = fac] if e(sample) 
-	outreg2 using "$directorio/Tables/reg_results/determinants_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality $\times$ Date FE, "\checkmark")
+
+forvalues p = 1/3 {
+	reghdfe noimss i.sex eda anios_esc i.t_tra [fw = fac] if period==`p', absorb(i.municipio#i.date) vce(robust) 
+	count if e(sample)==1
+	local obs = `r(N)'
+	su noimss [fw = fac] if e(sample) 	
+	outreg2 using "$directorio/Tables/reg_results/determinants_informal.xls", addstat(Dep var mean, `r(mean)', Obs, `obs') addtext(Municipality $\times$ Date FE, "\checkmark") dec(2) pdec(3)
 	
-	reghdfe informal_hussmann i.sex eda anios_esc hrsocup log_ing i.t_tra [fw = fac] if period==`p', absorb(i.scian i.municipio#i.date) vce(robust) 
-	su informal_hussmann [fw = fac] if e(sample) 
-	outreg2 using "$directorio/Tables/reg_results/determinants_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality $\times$ Date FE, "\checkmark", Occupation FE, "\checkmark")	
+	reghdfe noimss i.sex eda anios_esc i.t_tra [fw = fac] if period==`p', absorb(i.scian i.municipio#i.date) vce(robust) 
+	count if e(sample)==1
+	local obs = `r(N)'
+	su noimss [fw = fac] if e(sample) 	
+	outreg2 using "$directorio/Tables/reg_results/determinants_informal.xls", addstat(Dep var mean, `r(mean)', Obs, `obs') addtext(Municipality $\times$ Date FE, "\checkmark", Occupation FE, "\checkmark") dec(2) pdec(3)	 
 }
 
-forvalues p = 3/4 {
-	reghdfe informal i.sex eda anios_esc hrsocup log_ing i.t_tra [fw = fac] if period==`p', absorb(i.municipio#i.date) vce(robust) 
-	su informal [fw = fac] if e(sample) 
-	outreg2 using "$directorio/Tables/reg_results/determinants_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality $\times$ Date FE, "\checkmark")
-	
-	reghdfe informal i.sex eda anios_esc hrsocup log_ing i.t_tra [fw = fac] if period==`p', absorb(i.scian i.municipio#i.date) vce(robust) 
-	su informal [fw = fac] if e(sample) 
-	outreg2 using "$directorio/Tables/reg_results/determinants_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality $\times$ Date FE, "\checkmark", Occupation FE, "\checkmark")	
-}
-
-forvalues p = 1/4 {
-	reghdfe noimss i.sex eda anios_esc hrsocup log_ing i.t_tra [fw = fac] if period==`p', absorb(i.municipio#i.date) vce(robust) 
-	su noimss [fw = fac] if e(sample) 
-	outreg2 using "$directorio/Tables/reg_results/determinants_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality $\times$ Date FE, "\checkmark")
-	
-	reghdfe noimss i.sex eda anios_esc hrsocup log_ing i.t_tra [fw = fac] if period==`p', absorb(i.scian i.municipio#i.date) vce(robust) 
-	su noimss [fw = fac] if e(sample) 
-	outreg2 using "$directorio/Tables/reg_results/determinants_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality $\times$ Date FE, "\checkmark", Occupation FE, "\checkmark")	
-}
 
 ********************************************************************************
-
-capture erase "$directorio/Tables/reg_results/characteristics_informal.xls"
-capture erase "$directorio/Tables/reg_results/characteristics_informal.txt"
-
-
-	reghdfe informal i.sex eda anios_esc hrsocup log_ing i.t_tra [fw = fac] if ene==0, absorb(i.municipio#i.date) vce(robust) 
-	su informal [fw = fac] if e(sample) 
-	outreg2 using "$directorio/Tables/reg_results/characteristics_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality $\times$ Date FE, "\checkmark")
-	
-	reghdfe informal i.sex eda anios_esc hrsocup log_ing i.t_tra [fw = fac] if ene==0, absorb(i.scian i.municipio#i.date) vce(robust) 
-	su informal [fw = fac] if e(sample) 
-	outreg2 using "$directorio/Tables/reg_results/characteristics_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality $\times$ Date FE, "\checkmark", Occupation FE, "\checkmark")	
-	
-foreach var of varlist informal_hussmann noimss noatencion_medica  {
-	reghdfe `var' i.sex eda anios_esc hrsocup log_ing i.t_tra [fw = fac] if ene==1, absorb(i.municipio#i.date) vce(robust) 
-	su `var' [fw = fac] if e(sample) 
-	outreg2 using "$directorio/Tables/reg_results/characteristics_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality $\times$ Date FE, "\checkmark")
-	
-	reghdfe `var' i.sex eda anios_esc hrsocup log_ing i.t_tra [fw = fac] if ene==1, absorb(i.scian i.municipio#i.date) vce(robust) 
-	su `var' [fw = fac] if e(sample) 
-	outreg2 using "$directorio/Tables/reg_results/characteristics_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality $\times$ Date FE, "\checkmark", Occupation FE, "\checkmark")	
-	
-	
-	reghdfe `var' i.sex eda anios_esc hrsocup log_ing i.t_tra [fw = fac] if ene==0, absorb(i.municipio#i.date) vce(robust) 
-	su `var' [fw = fac] if e(sample) 
-	outreg2 using "$directorio/Tables/reg_results/characteristics_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality $\times$ Date FE, "\checkmark")	
-	
-	reghdfe `var' i.sex eda anios_esc hrsocup log_ing i.t_tra [fw = fac] if ene==0, absorb(i.scian i.municipio#i.date) vce(robust) 
-	su `var' [fw = fac] if e(sample) 
-	outreg2 using "$directorio/Tables/reg_results/characteristics_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality $\times$ Date FE, "\checkmark", Occupation FE, "\checkmark")		
-}
-
-foreach var of varlist nosat  {
-	reghdfe `var' i.sex eda anios_esc hrsocup log_ing i.t_tra [fw = fac] if ene==0, absorb(i.municipio#i.date) vce(robust) 
-	su `var' [fw = fac] if e(sample) 
-	outreg2 using "$directorio/Tables/reg_results/characteristics_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality $\times$ Date FE, "\checkmark")
-	
-	reghdfe `var' i.sex eda anios_esc hrsocup log_ing i.t_tra [fw = fac] if ene==0, absorb(i.scian i.municipio#i.date) vce(robust) 
-	su `var' [fw = fac] if e(sample) 
-	outreg2 using "$directorio/Tables/reg_results/characteristics_informal.xls", addstat(Dep var mean, `r(mean)') addtext(Municipality $\times$ Date FE, "\checkmark", Occupation FE, "\checkmark")		
-}
 
 
 ***********************************
 ****   Dynamic determinants   *****
 ***********************************
-foreach infvar in informal_hussmann noimss noatencion_medica {
+
+foreach var of varlist  eda anios_esc hrsocup log_ing  {
+	su `var'
+	replace `var' = (`var'-`r(mean)')/`r(sd)'
+}
+
+
+foreach infvar in noimss {
 matrix coef = J(80,18,.)
 local i = 1
-forvalues dte = `=yq(2000,2)'/`=yq(2020,1)' {
+forvalues dte = `=yq(2000,2)'/`=yq(2015,4)' {
 	
 	di `dte'
 	qui reghdfe `infvar' 2.sex eda anios_esc hrsocup log_ing 2.t_tra ibn.scian [fw = fac] if date==`dte', absorb(i.municipio) vce(robust) 
@@ -175,20 +123,8 @@ matrix colnames coef = `nmes'
 preserve
 clear
 svmat coef, names(col) 
-gen qr = _n + yq(2000,2) - 1 if _n + yq(2000,2) -1 <= yq(2020,1)
+gen qr = _n + yq(2000,2) - 1 if _n + yq(2000,2) -1 <= yq(2015,4)
 save "$directorio\_aux\beta_characteristics_`infvar'.dta", replace
-
-* Coefplot
-foreach var in sex eda anios_esc hrsocup log_ing t_tra {
-	twoway (lpolyci `var'_beta qr if qr<=`=yq(2004,4)', clcolor(maroon%50) fintensity(inten70)) ///
-		(scatter `var'_beta qr if qr<=`=yq(2004,4)', connect(l) msymbol(Oh) msize(tiny) lcolor(navy%25)) ///
-		(lpolyci `var'_beta qr if qr>`=yq(2004,4)', clcolor(maroon%50) fintensity(inten70)) ///
-		(scatter `var'_beta qr if qr>`=yq(2004,4)', connect(l) msymbol(Oh) msize(tiny) lcolor(navy%25)) ///
-		(rcap `var'_hi `var'_lo qr, msize(medlarge) color(navy)) ///
-		, legend(off) xlabel(160(15)240,format(%tq) labsize(small)) ytitle("Effect in informality : {&beta}{subscript:i}") ///
-		graphregion(color(white)) yline(0, lcolor(black%90)) xline(`=yq(2005,1)', lpattern(dash) lcolor(black%75))
-	graph export "$directorio/Figuras/beta_`var'_`infvar'.pdf", replace
-}
 restore
 }
 
@@ -196,7 +132,7 @@ drop if ene==1
 foreach infvar in informal nosat {
 matrix coef = J(61,18,.)
 local i = 1
-forvalues dte = `=yq(2005,1)'/`=yq(2020,1)' {
+forvalues dte = `=yq(2005,1)'/`=yq(2015,4)' {
 	
 	di `dte'
 	qui reghdfe `infvar' 2.sex eda anios_esc hrsocup log_ing 2.t_tra ibn.scian [fw = fac] if date==`dte', absorb(i.municipio) vce(robust) 
@@ -227,18 +163,48 @@ matrix colnames coef = `nmes'
 preserve
 clear
 svmat coef, names(col) 
-gen qr = _n + yq(2005,1) - 1 if _n + yq(2005,1) -1 <= yq(2020,1)
+gen qr = _n + yq(2005,1) - 1 if _n + yq(2005,1) -1 <= yq(2015,4)
 save "$directorio\_aux\beta_characteristics_`infvar'.dta", replace
-
-* Coefplot
-foreach var in sex eda anios_esc hrsocup log_ing t_tra {
-	twoway (lpolyci `var'_beta qr if qr>`=yq(2004,4)', clcolor(maroon%50) fintensity(inten70)) ///
-		(scatter `var'_beta qr if qr>`=yq(2004,4)', connect(l) msymbol(Oh) msize(tiny) lcolor(navy%25)) ///
-		(rcap `var'_hi `var'_lo qr, msize(medlarge) color(navy)) ///
-		, legend(off) xlabel(180(15)240,format(%tq) labsize(small)) ytitle("Effect in informality : {&beta}{subscript:i}") ///
-		graphregion(color(white)) yline(0, lcolor(black%90)) xline(`=yq(2005,1)', lpattern(dash) lcolor(black%75))
-	graph export "$directorio/Figuras/beta_`var'_`infvar'.pdf", replace
-}
 restore
 }
 
+********************************************************************************
+
+foreach infvar in noimss nosat informal {
+	use "$directorio\_aux\beta_characteristics_`infvar'.dta", clear
+	foreach var in sex eda anios_esc hrsocup log_ing t_tra {
+		rename (`var'_beta `var'_hi `var'_lo) (`var'_`infvar'_beta `var'_`infvar'_hi `var'_`infvar'_lo)
+	}
+	save "$directorio\_aux\beta_characteristics_`infvar'.dta", replace
+}
+
+clear 
+set obs 1
+foreach infvar in noimss nosat informal {
+	append using "$directorio\_aux\beta_characteristics_`infvar'.dta"
+}
+save "$directorio\_aux\beta_characteristics.dta", replace
+
+********************************************************************************
+
+use "$directorio\_aux\beta_characteristics.dta", clear
+
+* Coefplot
+foreach var in sex eda anios_esc hrsocup log_ing t_tra {
+	twoway (lpolyci `var'_noimss_beta qr if qr<=`=yq(2004,4)', clcolor(maroon%75) fintensity(inten70)) ///
+		(scatter `var'_noimss_beta qr if qr<=`=yq(2004,4)', connect(l) msymbol(Oh) msize(tiny) lcolor(navy%20) mcolor(navy%40)) ///
+		(lpolyci `var'_noimss_beta qr if qr>`=yq(2004,4)', clcolor(maroon%75) fintensity(inten70)) ///
+		(scatter `var'_noimss_beta qr if qr>`=yq(2004,4)', connect(l) msymbol(Oh) msize(tiny) lcolor(navy%20) mcolor(navy%40)) ///
+		, legend(off) xlabel(160(15)223,format(%tq) labsize(small)) ytitle("Effect in informality : z-score") title("No IMSS") ///
+		graphregion(color(white)) yline(0, lcolor(black%90)) xline(`=yq(2005,1)', lpattern(dash) lcolor(black%75)) name(noimss, replace)
+	graph export "$directorio/Figuras/beta_`var'_noimss.pdf", replace
+		
+	twoway (lpolyci `var'_informal_beta qr if qr>`=yq(2004,4)', clcolor(maroon%75) fintensity(inten70)) ///
+		(scatter `var'_informal_beta qr if qr>`=yq(2004,4)', connect(l) msymbol(Oh) msize(tiny) lcolor(navy%20) mcolor(navy%40)) ///
+		, legend(off) xlabel(180(15)223,format(%tq) labsize(small)) title("Informality (INEGI)") ///
+		graphregion(color(white)) yline(0, lcolor(black%90)) name(informal, replace)
+	graph export "$directorio/Figuras/beta_`var'_informal.pdf", replace
+		
+	graph combine noimss informal , ycommon rows(1) 	
+	graph export "$directorio/Figuras/beta_`var'.pdf", replace
+}

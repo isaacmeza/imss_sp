@@ -26,7 +26,7 @@ append using "$directorio\Data Created\ene.dta", gen(ene)
 use "$directorio\_aux\master.dta", clear
 
 label copy scian new_scian, replace
-label define new_scian 23 "Agropecuario" 24 "Mineria" 25 "Industria Manufacturera" 26 "Construccion" 27 "Electricidad, Gas y Agua" 28 "Comercio, Restaurantes y Hoteles" 29 "Transporte Almacenamiento y Comunicaciones" 30 "Servicios Financieros" 31 "Servicios Comunales, Sociales y Personales" 32 "Insuficientemente Especificado", add
+label define new_scian 23 "Agriculture & Livestock" 24 "Mining" 25 "Manufacturing" 26 "Construction" 27 "Utilities" 28 "Retail, restaurants & hotels" 29 "Transportation, Storage & communication" 30 "Financial services" 31 "Personal & social services" 32 "Insufficiently specified", add
 label values scian new_scian
 
 *Municipality
@@ -42,10 +42,7 @@ gen log_ing = log(ing_x_hrs+1)
 *Informal 
 gen byte informal = (emp_ppal==1) if emp_ppal!=0 & !missing(emp_ppal)
 gen byte noimss = !inlist(imssissste,1) if !inlist(imssissste,0,5,6) & !missing(imssissste)
-gen byte noatencion_medica = !inlist(imssissste,1,2,3) if !inlist(imssissste,0,5,6) & !missing(imssissste)
 gen byte nosat = (p4g!=3) if p4g!=9 & !missing(p4g)
-gen byte informal_hussmann = (mh_fil2==1) if mh_fil2!=0 & !missing(mh_fil2)
-replace informal_hussmann = (tue2==5) if tue2!=0 & ene==1
 
 *Formal/Informal/Desocupado
 gen byte class_trab = informal
@@ -61,40 +58,37 @@ replace class_trab = 2 if missing(class_trab) & clase1==1
 gen time = .
 replace time = 1 if inrange(year,2000,2004)
 replace time = 2 if inrange(year,2005,2010)
-replace time = 3 if inrange(year,2011,2020)
+replace time = 3 if inrange(year,2011,2015)
 
 gen informal_ = informal
 replace informal_ = 0 if ene==1
 gen nosat_ = nosat
 replace nosat_ = 0 if ene==1
 
-iebaltab informal_ informal_hussmann noimss nosat_ [fw=fac], grpvar(time) save("$directorio\Tables\reg_results\ss_shareinf.xlsx") total vce(robust)  pttest replace 
+iebaltab informal_ noimss nosat_ [fw=fac], grpvar(time) save("$directorio\Tables\reg_results\ss_shareinf.xlsx") total vce(robust)  pttest replace 
 
+qui putexcel set "$directorio\Tables\reg_results\ss_shareinf.xlsx", sheet("Sheet1") modify	
 
-***********************************
-**** 			SS	  		  *****
-***********************************
+local k = 5
+foreach var in informal_ noimss nosat_ {
+	forvalues i=1/3 {
+		local Col = substr(c(ALPHA),`=-1+`i'*4',1)
+		su `var' if time==`i'
+		qui putexcel `Col'`k'=`r(N)'
+	}
+	local k = `k' + 2
+}
 
-tab scian, gen (scian_dummy)
-gen mujer = (sex==2) if !missing(sex)
-gen dos_t = (t_tra==2) if !missing(t_tra) & t_tra!=0
-
-iebaltab noimss noatencion_medica mujer eda anios_esc hrsocup log_ing dos_t scian_dummy* if ene==1 [fw=fac], grpvar(class_trab) save("$directorio\Tables\reg_results\ss_ene.xlsx") total vce(robust)  pttest replace 
-
-iebaltab  noimss noatencion_medica nosat informal_hussmann mujer eda anios_esc hrsocup log_ing dos_t scian_dummy* if ene==0 [fw=fac], grpvar(class_trab) save("$directorio\Tables\reg_results\ss_enoe.xlsx") total vce(robust)  pttest replace balmiss(zero)
 
 
 ***********************************
 **** 		  CATPLOT	  	  *****
 ***********************************
 
-gen informal_husmann__ = informal_hussmann*100
-gen informal__ = informal*100
-
-graph hbar (mean) informal_husmann__ if scian!=0 & ene==1, over(scian) ytitle("Informal %")
+graph hbar (mean) noimss if scian!=0 & ene==1, over(scian) ytitle("No IMSS %")
 graph export "$directorio/Figuras/catplot_scian_ene.pdf", replace	
 
-graph hbar (mean) informal__ if scian!=0 & ene==0, over(scian) ytitle("Informal %")
+graph hbar (mean) noimss if scian!=0 & ene==0, over(scian) ytitle("No IMSS %")
 graph export "$directorio/Figuras/catplot_scian_enoe.pdf", replace	
 
 
@@ -102,19 +96,12 @@ graph export "$directorio/Figuras/catplot_scian_enoe.pdf", replace
 **** 			Corr  		  *****
 ***********************************
 
-corr informal_hussmann noimss noatencion_medica [fw=fac]  if ene==1
+corr informal noimss nosat  [fw=fac] if ene==0
 qui putexcel set "$directorio\Tables\corr_informal.xlsx", sheet("corr_informal") modify	
-qui putexcel B2=matrix(r(C))  
-
-corr informal informal_hussmann noimss noatencion_medica nosat  [fw=fac] if ene==0
 qui putexcel B6=matrix(r(C))  
 
+collapse (mean) informal noimss nosat [fw=fac], by(year ent mun)
 
-collapse (mean) informal noimss noatencion_medica nosat informal_hussmann [fw=fac], by(year ent mun)
-
-corr informal_hussmann noimss noatencion_medica if year<=2004
+corr informal noimss nosat if year>2004
 qui putexcel set "$directorio\Tables\corr_informal.xlsx", sheet("corr_informal_mun") modify	
-qui putexcel B2=matrix(r(C))  
-
-corr informal informal_hussmann noimss noatencion_medica nosat if year>2004
 qui putexcel B6=matrix(r(C))  

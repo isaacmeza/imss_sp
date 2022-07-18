@@ -1,11 +1,29 @@
+
+********************
+version 17.0
+********************
+/* 
+/*******************************************************************************
+* Name of file:	
+* Author:	Isaac M
+* Machine:	Isaac M 											
+* Date of creation:	
+* Last date of modification: July. 11, 2022
+* Modifications: 
+* Files used:     
+		- 
+* Files created:  
+
+* Purpose: Cleaning of BC dataset - Bosh & Campos DoFile
+
+*******************************************************************************/
+*/
 clear all
 set mem 1000m
 set matsize 6000
 set maxvar 8000
 set more off
 
-
-cd "C:\Users\isaac\Dropbox\Statistics\P27\IMSS\" ///CHANGE THIS TO YOUR DIRECTORE STRUCTURE
 
 use "Data Original\employers.dta", clear
 joinby municipio year quarter using "Data Original\employees.dta", unm(b)
@@ -78,13 +96,7 @@ gen SP_takeup=ind/population	//SP enrollment rate//
 
 *IMPORTANT ASSUMPTION I AM TAKING THE IMPLEMENTATION OF THE SP ONLY IN THOSE MUNICIPALITIES WITH MORE THAN 10 FAMILIES (
 *ONCE THE JOIN THE SP THEY ARE IN FOREVER
-
-tsfill
-replace ind = . if ind==0
-by cvemun : ipolate ind mydate, gen(ind_)
-replace ind_ = 0 if ind_==. 
-drop ind
-rename ind_ ind
+replace ind=0 if ind==.
 replace fam=0 if fam==.
 replace ind=0 if ind<1
 replace fam=0 if ind<1
@@ -142,28 +154,52 @@ gen x=log(ind+1)
 gen f=log(fam+1)
 
 *Employees
-gen e_t=log(emp_t)
-gen e1=log(emp_size_1)
-gen e2=log(emp_size_2_5)
-gen e3=log(emp_size_6_50)
-gen e4=log(emp_size_51_250)
-gen e5=log(emp_size_251_500)
-gen e6=log(emp_size_501_1000+emp_size_1000)
-gen e7=log(emp_size_251_500+emp_size_501_1000+emp_size_1000)
-gen e8=log(emp_size_1+emp_size_2_5+emp_size_6_50+emp_size_51_250)
-gen e9=log(emp_size_1+emp_size_2_5+emp_size_6_50)
+gen e_t = log(emp_t + 1)
+gen e1 = log(emp_size_1 + 1)
+gen e2 = log(emp_size_2_5 + 1)
+gen e3 = log(emp_size_6_50 + 1)
+gen e4 = log(emp_size_51_250 + 1)
+gen e5 = log(emp_size_251_500 + 1)
+gen e6 = log(emp_size_501_1000+emp_size_1000 + 1)
+gen e7 = log(emp_size_251_500+emp_size_501_1000+emp_size_1000 + 1)
+gen e8 = log(emp_size_1+emp_size_2_5+emp_size_6_50+emp_size_51_250 + 1)
+gen e9 = log(emp_size_1+emp_size_2_5+emp_size_6_50 + 1)
 
 *Employers
-gen p_t=log(pat_t)
-gen p1=log(pat_size_1)
-gen p2=log(pat_size_2_5)
-gen p3=log(pat_size_6_50)
-gen p4=log(pat_size_51_250)
-gen p5=log(pat_size_251_500)
-gen p6=log(pat_size_501_1000+pat_size_1000)
-gen p7=log(pat_size_251_500+pat_size_501_1000+pat_size_1000)
-gen p8=log(pat_size_1+pat_size_2_5+pat_size_6_50+pat_size_51_250)
-gen p9=log(pat_size_1+pat_size_2_5+pat_size_6_50)
+gen p_t = log(pat_t + 1)
+gen p1 = log(pat_size_1 + 1)
+gen p2 = log(pat_size_2_5 + 1)
+gen p3 = log(pat_size_6_50 + 1)
+gen p4 = log(pat_size_51_250 + 1)
+gen p5 = log(pat_size_251_500 + 1)
+gen p6 = log(pat_size_501_1000+pat_size_1000 + 1)
+gen p7 = log(pat_size_251_500+pat_size_501_1000+pat_size_1000 + 1)
+gen p8 = log(pat_size_1+pat_size_2_5+pat_size_6_50+pat_size_51_250 + 1)
+gen p9 = log(pat_size_1+pat_size_2_5+pat_size_6_50 + 1) 
+
+*Employees
+gen e_t_=log(emp_t)
+gen e1_=log(emp_size_1)
+gen e2_=log(emp_size_2_5)
+gen e3_=log(emp_size_6_50)
+gen e4_=log(emp_size_51_250)
+gen e5_=log(emp_size_251_500)
+gen e6_=log(emp_size_501_1000+emp_size_1000)
+gen e7_=log(emp_size_251_500+emp_size_501_1000+emp_size_1000)
+gen e8_=log(emp_size_1+emp_size_2_5+emp_size_6_50+emp_size_51_250)
+gen e9_=log(emp_size_1+emp_size_2_5+emp_size_6_50)
+
+*Employers
+gen p_t_=log(pat_t)
+gen p1_=log(pat_size_1)
+gen p2_=log(pat_size_2_5)
+gen p3_=log(pat_size_6_50)
+gen p4_=log(pat_size_51_250)
+gen p5_=log(pat_size_251_500)
+gen p6_=log(pat_size_501_1000+pat_size_1000)
+gen p7_=log(pat_size_251_500+pat_size_501_1000+pat_size_1000)
+gen p8_=log(pat_size_1+pat_size_2_5+pat_size_6_50+pat_size_51_250)
+gen p9_=log(pat_size_1+pat_size_2_5+pat_size_6_50)
 
 drop ent
 gen ent=int(cvemun/1000)
@@ -176,31 +212,64 @@ egen government=group(gob)
 
 tset cve mydate
 
+*MERGE WITH LUMINOSITY DATA
+merge m:1 cvemun year quarter using "$directorio\Data Created\luminosity.dta", nogen keep(1 3) keepusing(median_lum)
+
+
 ***************
 *** BALANCED PANEL DATA
 **************
 *WE USE A BALANCED PANEL DATASET
-*
-/*
 gen ones=(emp_t>1 & emp_t!=.)
-gen oness=(emp_t>=1 & emp_t!=.)
-bys cvemun: egen txx=total(oness)
-
+bys cvemun: egen tx=total(ones)
 tab tx
 
-keep if tx==48	//since 2000, 10*4//
+gen bal_48 = (tx==48 & p_t_!=.) //since 2000, 10*4// //For which there is at least 1 employer in the municipality//
 
-keep if p_t!=. //For which there is at least 1 employer in the municipality//
-*/
+*keep if tx==48	//since 2000, 10*4//
+*keep if p_t!=. //For which there is at least 1 employer in the municipality//
 
+
+
+*DEFINING IMPLEMENTATION
+
+gen imp=.
+replace imp=0 if (year==2002)&Tb==1
+bys cve: egen imp0=mean(imp)
+replace imp=1 if (year==2003)&Tb==1&imp0==.
+bys cve: egen imp1=mean(imp)
+replace imp=2 if (year==2004)&Tb==1&imp1==.
+bys cve: egen imp2=mean(imp)
+replace imp=3 if (year==2005)&Tb==1&imp2==.
+bys cve: egen imp3=mean(imp)
+replace imp=4 if (year==2006)&Tb==1&imp3==.
+bys cve: egen imp4=mean(imp)
+replace imp=5 if (year==2007|year==2008|year==2009)&Tb==1&imp4==.
+bys cve: egen imp5=mean(imp)
+
+
+
+
+tsset cvemun mydate
 sort cvemun mydate
 
 quietly tab mydate, gen(_Ix)
 
+gen fe_statedate=100*mydate+ent
+gen log_pop2=log_pop^2
+gen log_pop3=log_pop^3
+sort cvemun mydate
 
 forvalues j=4 8 to 16 {
+      quietly bys cvemun:gen x`j'=x[_n-`j'] 
+	quietly bys cvemun:gen xL`j'=x[_n+`j'] 
+      quietly bys cvemun:gen T`j'=T[_n-`j'] 
+      quietly bys cvemun:gen TL`j'=T[_n+`j'] 
       quietly bys cvemun:gen Tb`j'=Tb[_n-`j'] 
       quietly bys cvemun:gen TbL`j'=Tb[_n+`j'] 
+	quietly bys cvemun:gen Tc`j'=Tc[_n-`j'] 
+      quietly bys cvemun:gen TcL`j'=Tc[_n+`j'] 
+
 
 
 }
@@ -208,15 +277,18 @@ forvalues j=4 8 to 16 {
 
 
 forval j=4 8 to 16 {
-
+      quietly replace x`j'=0 if T`j'==.
+      quietly replace T`j'=0 if T`j'==.
+	quietly replace TL`j'=1 if TL`j'==.
 	quietly replace Tb`j'=0 if Tb`j'==.
 	quietly replace TbL`j'=1 if TbL`j'==.
-
+      quietly replace Tc`j'=0 if Tc`j'==.
+	quietly replace TcL`j'=1 if TcL`j'==.
 
 
 }
 
-foreach var in  Tb {
+foreach var in T Tb {
 gen yyy=0
 replace yyy=`var'[_n]+yyy[_n-1] if cvemun[_n]==cvemun[_n-1]
 gen `var'x=0
@@ -225,21 +297,15 @@ drop yyy
 }
 
 forvalues j=4 8 to 16 {
-
+      quietly bys cvemun:gen T`j'x=Tx[_n-`j'] 
       quietly bys cvemun:gen Tb`j'x=Tbx[_n-`j'] 
       quietly bys cvemun:gen TbL`j'x=Tbx[_n+`j'] 
-
-
+      quietly bys cvemun:gen TL`j'x=Tx[_n+`j'] 
+replace T`j'x=0 if T`j'x==.
 replace Tb`j'x=0 if Tb`j'x==.
-
+replace TL`j'x=0 if TL`j'x==.
 replace TbL`j'x=0 if TbL`j'x==.
 }
-
-
-
-replace TbL12x=1 if TbL12==0
-*replace TbL16x=1 if TbL16==0
-
 
 
 
@@ -249,19 +315,28 @@ foreach var in insured urban unm inf p50 age1 age2  gender ////
 gen x_t_`var'=`var'*mydate
 }
 
+
+********************************************************************************
+***************** 				Event Study			 ***************************
+********************************************************************************
+sort cvemun year quarter
+gen TT=1 if Tb==1 & Tb[_n-1]==0
+replace TT=0 if TT==.
+
+bys cvemun: egen tmax=max(TT*mydate)
+gen xxx=mydate-tmax	//temporal variable//
+replace xxx=-16 if xxx<-16
+replace xxx=. if xxx>50
+replace xxx=20 if xxx>20 & xxx!=.
+
+gen yyy=mydate-tmax	//temporal variable//
+replace yyy=-12 if yyy<-12
+replace yyy=. if yyy>50
+replace yyy=16 if yyy>16 & yyy!=.
+
+
+xtile size=pob2000, n(4)
 gen mydate2=mydate*mydate
 gen mydate3=mydate2*mydate
 
-
-
-
-save  "Data Created\Reg_t.dta", replace	//General Dataset saved//
-
-****REGRESSIONS
-
-use  "Data Created\Reg_t.dta", clear	
-
-
- xi:xtreg e9  TbL12x TbL8x  Tbx Tb4x Tb8x Tb12x Tb16  log_pop x_t_* i.ent*mydate i.ent*mydate2 i.ent*mydate3 _Ix* [aw=pob2000], fe robust cluster(cvemun)
- 
- 
+save  "Data Created\DiD_BC.dta", replace	//General Dataset saved//
