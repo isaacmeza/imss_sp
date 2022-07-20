@@ -347,17 +347,17 @@ esttab using "$directorio/Tables/reg_results/transition_prob_reg_inf.csv", se r2
 qui putexcel set "$directorio\Tables\reg_results\meanvardeps.xlsx", sheet("meanvardeps") modify	
 local j = 10
 foreach var of varlist eda1 anios_esc1 hrsocup1 log_ing1 mean_lum1 median_lum_c {
-	qui su `var' if informal1==0
+	qui su `var' if informal1==1
 	qui putexcel E`j'=`r(N)'	
-	qui su `var' [fw = fac1] if informal1==0
+	qui su `var' [fw = fac1] if informal1==1
 	qui putexcel B`j'=`r(mean)'
 	qui putexcel C`j'=`r(sd)'
 	qui putexcel D`j'=`r(N)'
 	gen `var'_inf = `var'-`r(mean)'
 	
-	qui su `var' if noimss1==0
+	qui su `var' if noimss1==1
 	qui putexcel J`j'=`r(N)'	
-	qui su `var' [fw = fac1] if noimss1==0
+	qui su `var' [fw = fac1] if noimss1==1
 	qui putexcel G`j'=`r(mean)'
 	qui putexcel H`j'=`r(sd)'
 	qui putexcel I`j'=`r(N)'
