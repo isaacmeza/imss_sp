@@ -101,10 +101,12 @@ gen sample2 = 1
 tsfill, full
 gen sample3 = 1
 
-
-*MERGE WITH LUMINOSITY DATA
+*MERGE WITH INEGI MORTALITY DATA
 replace year = yofd(dofq(date))
 replace quarter = quarter(dofq(date))
+merge 1:1 cvemun year quarter using "Data Created\mortality_cvemundate.dta", nogen
+
+*MERGE WITH LUMINOSITY DATA
 merge 1:1 cvemun year quarter using "$directorio\Data Created\luminosity.dta", nogen keep(1 3) keepusing(median_lum)
 
 

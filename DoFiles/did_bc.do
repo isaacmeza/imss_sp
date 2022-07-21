@@ -8,8 +8,8 @@ version 17.0
 * Author:	Isaac M
 * Machine:	Isaac M 											
 * Date of creation:	July. 11, 2022
-* Last date of modification: 
-* Modifications: 
+* Last date of modification: July. 20, 2022
+* Modifications: Added mortality outcomes
 * Files used:     
 		- 
 * Files created:  
@@ -33,7 +33,7 @@ by cvemun : egen q_imp = mean(q_SP)
 	replace TbL16x=1 if TbL16==0
 	replace TL16x=1 if TL16==0
 	
-foreach var in p_t p1 p4 p7 p9 e_t e1 e4 e7 e9 { 
+foreach var in /*p_t p1 p4 p7 p9 e_t e1 e4 e7 e9*/ total_d* { 
 	
 	*********** REGRESSIONS *************
 	*************************************

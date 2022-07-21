@@ -195,16 +195,14 @@ foreach var in sex eda anios_esc hrsocup log_ing t_tra {
 		(scatter `var'_noimss_beta qr if qr<=`=yq(2004,4)', connect(l) msymbol(Oh) msize(tiny) lcolor(navy%20) mcolor(navy%40)) ///
 		(lpolyci `var'_noimss_beta qr if qr>`=yq(2004,4)', clcolor(maroon%75) fintensity(inten70)) ///
 		(scatter `var'_noimss_beta qr if qr>`=yq(2004,4)', connect(l) msymbol(Oh) msize(tiny) lcolor(navy%20) mcolor(navy%40)) ///
-		, legend(off) xlabel(160(15)223,format(%tq) labsize(small)) ytitle("Effect in informality : z-score") title("No IMSS") ///
+		, legend(off) xlabel(160(15)223,format(%tq) labsize(small)) ytitle("Effect in informality : z-score", size(medium)) ///
 		graphregion(color(white)) yline(0, lcolor(black%90)) xline(`=yq(2005,1)', lpattern(dash) lcolor(black%75)) name(noimss, replace)
 	graph export "$directorio/Figuras/beta_`var'_noimss.pdf", replace
 		
 	twoway (lpolyci `var'_informal_beta qr if qr>`=yq(2004,4)', clcolor(maroon%75) fintensity(inten70)) ///
 		(scatter `var'_informal_beta qr if qr>`=yq(2004,4)', connect(l) msymbol(Oh) msize(tiny) lcolor(navy%20) mcolor(navy%40)) ///
-		, legend(off) xlabel(180(15)223,format(%tq) labsize(small)) title("Informality (INEGI)") ///
+		, legend(off) xlabel(180(15)223,format(%tq) labsize(small)) ytitle("Effect in informality : z-score", size(medium)) ///
 		graphregion(color(white)) yline(0, lcolor(black%90)) name(informal, replace)
 	graph export "$directorio/Figuras/beta_`var'_informal.pdf", replace
 		
-	graph combine noimss informal , ycommon rows(1) 	
-	graph export "$directorio/Figuras/beta_`var'.pdf", replace
 }

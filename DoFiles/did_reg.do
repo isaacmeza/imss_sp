@@ -7,9 +7,9 @@ version 17.0
 * Name of file:	
 * Author:	Isaac M
 * Machine:	Isaac M 											
-* Date of creation:	
-* Last date of modification: Jun. 20, 2022
-* Modifications: 
+* Date of creation:	June. 20, 2022
+* Last date of modification: July. 20, 2022
+* Modifications: Added mortality outcomes
 * Files used:     
 		- 
 * Files created:  
@@ -36,7 +36,7 @@ gen date3 = date2*date
 tab SP_b_p, gen(SP_b_p)
 	
 
-foreach var in p_t p1 p4 p7 p9 e_t e1 e4 e7 e9 { 
+foreach var in /*p_t p1 p4 p7 p9 e_t e1 e4 e7 e9*/ total_d* { 
 
 	eststo clear
 	
