@@ -33,7 +33,7 @@ by cvemun : egen q_imp = mean(q_SP)
 	replace TbL16x=1 if TbL16==0
 	replace TL16x=1 if TL16==0
 	
-foreach var in /*p_t p1 p4 p7 p9 e_t e1 e4 e7 e9*/ total_d* { 
+foreach var in /*p_t p1 p4 p7 p9 e_t e1 e4 e7 e9*/ total_d total_d_asist total_d_noasist total_d_imss_e total_d_imss total_d_sp total_d_cov_sp total_d_cov_isp total_d_sp_cov_sp total_d_imss_cov_sp { 
 	
 	*********** REGRESSIONS *************
 	*************************************
@@ -41,12 +41,14 @@ foreach var in /*p_t p1 p4 p7 p9 e_t e1 e4 e7 e9*/ total_d* {
 	eststo clear
 
 	* Bosch-Campos specification
+	if strpos("`var'","total")==0 {
 	eststo : xi : xtreg `var'_ TbL16x TbL12x TbL8x Tbx Tb4x Tb8x Tb12x Tb16  log_pop x_t_* i.ent*mydate i.ent*mydate2 i.ent*mydate3 _Ix* [aw=pob2000] if bal_48==1, fe robust cluster(cvemun)
 		qui levelsof cvemun if e(sample)==1 
 		local num_mun = `r(r)'
 		su `var'_ if e(sample)==1
 		estadd scalar DepVarMean = `r(mean)'
 		estadd scalar num_mun = `num_mun'	
+	}
 
 	eststo : xi : xtreg `var' TbL16x TbL12x TbL8x Tbx Tb4x Tb8x Tb12x Tb16  log_pop x_t_* i.ent*mydate i.ent*mydate2 i.ent*mydate3 _Ix* [aw=pob2000], fe robust cluster(cvemun)
 		qui levelsof cvemun if e(sample)==1 

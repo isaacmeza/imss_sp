@@ -29,8 +29,6 @@ use "Data Original\employers.dta", clear
 joinby municipio year quarter using "Data Original\employees.dta", unm(b)
 drop _merge
 
-save "Data Created\data_g.dta",replace
-
 
 ****MERGING WITH OTHER DATASETS
 
@@ -120,6 +118,13 @@ sort cvemun year quarter
 tab _merge
 keep if _merge==3	//Drop those cities that were not cities in 2000//
 drop _merge
+
+*MERGE WITH INEGI MORTALITY DATA
+merge 1:1 cvemun year quarter using "Data Created\mortality_cvemundate.dta", nogen
+
+foreach var of varlist total_d* {
+    replace `var' = log(`var' + 1)
+}
 
 *HERE I GENERATE SOME VARIABLES.
 gen ent=statemx

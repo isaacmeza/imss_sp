@@ -36,7 +36,7 @@ gen date3 = date2*date
 tab SP_b_p, gen(SP_b_p)
 	
 
-foreach var in /*p_t p1 p4 p7 p9 e_t e1 e4 e7 e9*/ total_d* { 
+foreach var in /*p_t p1 p4 p7 p9 e_t e1 e4 e7 e9*/ total_d total_d_asist total_d_noasist total_d_imss_e total_d_imss total_d_sp total_d_cov_sp total_d_cov_isp total_d_sp_cov_sp total_d_imss_cov_sp { 
 
 	eststo clear
 	
