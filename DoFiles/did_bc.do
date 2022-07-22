@@ -42,12 +42,20 @@ foreach var in /*p_t p1 p4 p7 p9 e_t e1 e4 e7 e9*/ total_d total_d_asist total_d
 
 	* Bosch-Campos specification
 	if strpos("`var'","total")==0 {
-	eststo : xi : xtreg `var'_ TbL16x TbL12x TbL8x Tbx Tb4x Tb8x Tb12x Tb16  log_pop x_t_* i.ent*mydate i.ent*mydate2 i.ent*mydate3 _Ix* [aw=pob2000] if bal_48==1, fe robust cluster(cvemun)
+		eststo : xi : xtreg `var'_ TbL16x TbL12x TbL8x Tbx Tb4x Tb8x Tb12x Tb16  log_pop x_t_* i.ent*mydate i.ent*mydate2 i.ent*mydate3 _Ix* [aw=pob2000] if bal_48==1, fe robust cluster(cvemun)
 		qui levelsof cvemun if e(sample)==1 
 		local num_mun = `r(r)'
 		su `var'_ if e(sample)==1
 		estadd scalar DepVarMean = `r(mean)'
 		estadd scalar num_mun = `num_mun'	
+	}
+	else {
+		eststo : xi : xtreg `var' TbL16x TbL12x TbL8x Tbx Tb4x Tb8x Tb12x Tb16  log_pop x_t_* i.ent*mydate i.ent*mydate2 i.ent*mydate3 _Ix* [aw=pob2000] if bal_48==1, fe robust cluster(cvemun)
+		qui levelsof cvemun if e(sample)==1 
+		local num_mun = `r(r)'
+		su `var' if e(sample)==1
+		estadd scalar DepVarMean = `r(mean)'
+		estadd scalar num_mun = `num_mun'		
 	}
 
 	eststo : xi : xtreg `var' TbL16x TbL12x TbL8x Tbx Tb4x Tb8x Tb12x Tb16  log_pop x_t_* i.ent*mydate i.ent*mydate2 i.ent*mydate3 _Ix* [aw=pob2000], fe robust cluster(cvemun)
@@ -107,19 +115,32 @@ foreach var in /*p_t p1 p4 p7 p9 e_t e1 e4 e7 e9*/ total_d total_d_asist total_d
 	********** EVENT STUDIES ************
 	*************************************
 	*************************************
-
-	xi : xtreg `var'_ xxx_p1-xxx_p15 xxx_p17-xxx_p37 _Ix* log_pop x_t_* i.ent*mydate i.ent*mydate2 i.ent*mydate3 [aw=pob2000] if bal_48==1, fe robust cluster(cvemun)
-	matrix event_bc_1 = J(37,5,.)	
-	forvalues j = 1/37 {
-		if `j'!=16 {
-			matrix event_bc_1[`j',1] = _b[xxx_p`j']
-			matrix event_bc_1[`j',2] = _b[xxx_p`j'] + invnormal(0.975)*_se[xxx_p`j']
-			matrix event_bc_1[`j',3] = _b[xxx_p`j'] - invnormal(0.975)*_se[xxx_p`j']
-			matrix event_bc_1[`j',4] = _b[xxx_p`j'] + invnormal(0.95)*_se[xxx_p`j']
-			matrix event_bc_1[`j',5] = _b[xxx_p`j'] - invnormal(0.95)*_se[xxx_p`j']		
+	if strpos("`var'","total")==0 {	    
+		xi : xtreg `var'_ xxx_p1-xxx_p15 xxx_p17-xxx_p37 _Ix* log_pop x_t_* i.ent*mydate i.ent*mydate2 i.ent*mydate3 [aw=pob2000] if bal_48==1, fe robust cluster(cvemun)
+		matrix event_bc_1 = J(37,5,.)	
+		forvalues j = 1/37 {
+			if `j'!=16 {
+				matrix event_bc_1[`j',1] = _b[xxx_p`j']
+				matrix event_bc_1[`j',2] = _b[xxx_p`j'] + invnormal(0.975)*_se[xxx_p`j']
+				matrix event_bc_1[`j',3] = _b[xxx_p`j'] - invnormal(0.975)*_se[xxx_p`j']
+				matrix event_bc_1[`j',4] = _b[xxx_p`j'] + invnormal(0.95)*_se[xxx_p`j']
+				matrix event_bc_1[`j',5] = _b[xxx_p`j'] - invnormal(0.95)*_se[xxx_p`j']		
+			}
 		}
 	}
-
+	else {
+		xi : xtreg `var' xxx_p1-xxx_p15 xxx_p17-xxx_p37 _Ix* log_pop x_t_* i.ent*mydate i.ent*mydate2 i.ent*mydate3 [aw=pob2000] if bal_48==1, fe robust cluster(cvemun)
+		matrix event_bc_1 = J(37,5,.)	
+		forvalues j = 1/37 {
+			if `j'!=16 {
+				matrix event_bc_1[`j',1] = _b[xxx_p`j']
+				matrix event_bc_1[`j',2] = _b[xxx_p`j'] + invnormal(0.975)*_se[xxx_p`j']
+				matrix event_bc_1[`j',3] = _b[xxx_p`j'] - invnormal(0.975)*_se[xxx_p`j']
+				matrix event_bc_1[`j',4] = _b[xxx_p`j'] + invnormal(0.95)*_se[xxx_p`j']
+				matrix event_bc_1[`j',5] = _b[xxx_p`j'] - invnormal(0.95)*_se[xxx_p`j']		
+			}
+		}
+	}
 
 	xi : xtreg `var' xxx_p1-xxx_p15 xxx_p17-xxx_p37 _Ix* log_pop x_t_* i.ent*mydate i.ent*mydate2 i.ent*mydate3 c.median_lum#i.mydate median_lum [aw=pob2000] if bal_48==1, fe robust cluster(cvemun)
 	matrix event_bc_2 = J(37,5,.)	
@@ -149,7 +170,7 @@ foreach var in /*p_t p1 p4 p7 p9 e_t e1 e4 e7 e9*/ total_d total_d_asist total_d
 	
 	clear 
 	forvalues i = 1/3 {
-		svmat event_bc_`i'
+		cap svmat event_bc_`i'
 	}
 	save  "_aux\event_bc_did_`var'.dta", replace		
 	********************************************************************************
@@ -161,8 +182,8 @@ foreach var in /*p_t p1 p4 p7 p9 e_t e1 e4 e7 e9*/ total_d total_d_asist total_d
 	*************************************
 	*************************************
 
-	gen period = _n - 17 if inrange(_n,1,37)
-
+	gen period = _n - 17 if inrange(_n,1,37)	
+			
 	forvalues i = 1/3 { 
 		twoway (scatter event_bc_`i'1 period, color(black) lcolor(gs10%50) msize(medium) connect(line)) /// 
 				(rcap event_bc_`i'2 event_bc_`i'3 period, color(navy%50)) /// 
