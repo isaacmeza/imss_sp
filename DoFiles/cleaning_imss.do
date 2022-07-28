@@ -35,7 +35,7 @@ use "$directorio/_aux/panel_trabajadores.dta", clear
 duplicates drop
 rename cve_mun_final municipio
 merge m:1 municipio using "Data Original\merge_ss_eneu_final.dta", keepusing(cvemun) keep(1 3) nogen
-replace cvemun = 0000 if missing(cvemun)
+drop if missing(cvemun)
 drop municipio
 
 *Date 

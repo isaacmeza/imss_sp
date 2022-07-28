@@ -21,9 +21,6 @@ version 17.0
 
 use "Data Created\mortality_refined.dta", clear
 
-*Keep only deaths ocurring in the same municipality of residence
-keep if (ent_resid==ent_ocurr) & (mun_resid==mun_ocurr)
-
 *Keep only nationals
 keep if nacionalidad=="Mexicano"
 
@@ -37,7 +34,7 @@ format date %tq
 cap drop year
 gen year = yofd(dofq(date))
 gen quarter = quarter(dofq(date))
-drop if year<2002
+drop if year<2000
 
 *Generate cvemun
 gen cvemun = ent_ocurr*1000 + mun_ocurr
@@ -46,19 +43,16 @@ drop if cvemun>33000
 *Generate variables of interest (to be collapsed (sum))
 	*covariates : sexo edad escolaridad ocupacion edo_civil tipo_area
 
-gen total_d = 1
-gen total_d_asist = 1 if asist_medi=="Con asistencia"
-gen total_d_noasist = 1 if asist_medi=="Sin asistencia" 
+gen total_d = 1 if (ent_resid==ent_ocurr) & (mun_resid==mun_ocurr)
+gen total_d_asist = 1 if asist_medi=="Con asistencia" & (ent_resid==ent_ocurr) & (mun_resid==mun_ocurr)
+gen total_d_noasist = 1 if asist_medi=="Sin asistencia" & (ent_resid==ent_ocurr) & (mun_resid==mun_ocurr)
 
-gen total_d_imss_e = 1 if derechohab=="IMSS"
 gen total_d_imss = 1 if strpos(derechohab,"IMSS")==1
-gen total_d_sp = 1 if derechohab=="Seguro Popular"
 
-gen total_d_cov_sp = 1 if rel_cov_sp==1
-gen total_d_cov_isp = 1 if inlist(rel_cov_sp,1,2)
+gen total_d_cov_sp = 1 if rel_cov_sp==1 & (ent_resid==ent_ocurr) & (mun_resid==mun_ocurr)
+gen total_d_cov_isp = 1 if inlist(rel_cov_sp,1,2) & (ent_resid==ent_ocurr) & (mun_resid==mun_ocurr)
 
-gen total_d_sp_cov_sp = 1 if derechohab=="Seguro Popular" & rel_cov_sp==1
-gen total_d_imss_cov_sp = 1 if derechohab=="IMSS" & rel_cov_sp==1
+gen total_d_imss_cov_sp = 1 if strpos(derechohab,"IMSS")==1 & rel_cov_sp==1
 
 
 *Collapse at the municipality-quarter level

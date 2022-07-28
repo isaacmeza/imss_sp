@@ -8,8 +8,8 @@ version 17.0
 * Author:	Isaac M
 * Machine:	Isaac M 											
 * Date of creation:	July. 04, 2022
-* Last date of modification: 
-* Modifications: IV-LASSO and XTIVREG
+* Last date of modification: July. 28, 2022
+* Modifications: IV-LASSO and XTIVREG, Added ASG Dep vars
 * Files used:     
 		- 
 * Files created:  
@@ -41,54 +41,96 @@ vl create instruments = (dummy_gov1 dummy_gov2)
 
 
 eststo clear
-foreach var in p_t p9 e_t e9 {
+foreach var in p_t_ e_t_ lg1_permanentes lg1_eventuales lg1_afiliados_imss lg1_ta_sal {
 		
 	*Pre-time trends
 	gen trend_`var' = `var' - L.`var'
 	
 	eststo : reg trend_`var' $instruments_c $instruments lgpop median_lum x_t_* if inrange(date,yq(2000,1),yq(2004,4)), r
+	cap test $instruments_c $instruments 
 	estadd scalar Fstat = `e(F)'
-
+	estadd scalar pval = `r(p)'
+	
 	eststo : reghdfe trend_`var' $instruments_c $instruments lgpop median_lum x_t_* if inrange(date,yq(2000,1),yq(2004,4)), absorb(cvemun) vce(robust) 
+	cap test $instruments_c $instruments 
 	estadd scalar Fstat = `e(F)'
+	estadd scalar pval = `r(p)'	
+	
 	qui cvlasso trend_`var' $instruments $instruments_c if inrange(date,yq(2000,1),yq(2004,4)), fe
 	qui lasso2 trend_`var' $instruments $instruments_c if inrange(date,yq(2000,1),yq(2004,4)), l(`lopt') fe 
 	eststo : reghdfe trend_`var' `e(selected)' median_lum lgpop if inrange(date,yq(2000,1),yq(2004,4)), absorb(cvemun) vce(robust)
+	cap test `e(selected)' 
 	estadd scalar Fstat = `e(F)'
+	cap estadd scalar pval = `r(p)'	
 	
 	*Pre-time trends	
 	gen trend4_`var' = `var' - L4.`var'
 		
 	eststo : reg trend4_`var' $instruments_c $instruments lgpop median_lum x_t_* if inrange(date,yq(2000,1),yq(2004,4)), r
+	cap test $instruments_c $instruments 
 	estadd scalar Fstat = `e(F)'
-
+	estadd scalar pval = `r(p)'
+	
 	eststo : reghdfe trend4_`var' $instruments_c $instruments lgpop median_lum x_t_* if inrange(date,yq(2000,1),yq(2004,4)), absorb(cvemun) vce(robust) 
+	cap test $instruments_c $instruments 
 	estadd scalar Fstat = `e(F)'
+	estadd scalar pval = `r(p)'
+	
 	qui cvlasso trend4_`var' $instruments $instruments_c if inrange(date,yq(2000,1),yq(2004,4)), fe
 	qui lasso2 trend4_`var' $instruments $instruments_c if inrange(date,yq(2000,1),yq(2004,4)), l(`lopt') fe 
 	eststo : reghdfe trend4_`var' `e(selected)' median_lum lgpop if inrange(date,yq(2000,1),yq(2004,4)), absorb(cvemun) vce(robust)
+	cap test `e(selected)' 
 	estadd scalar Fstat = `e(F)'	
+	cap estadd scalar pval = `r(p)'
+	
+	*Pre-time trends	
+	gen trend16_`var' = `var' - L16.`var'
+		
+	eststo : reg trend16_`var' $instruments_c $instruments lgpop median_lum x_t_* if inrange(date,yq(2000,1),yq(2004,4)), r
+	cap test $instruments_c $instruments 
+	estadd scalar Fstat = `e(F)'
+	estadd scalar pval = `r(p)'
+	
+	eststo : reghdfe trend16_`var' $instruments_c $instruments lgpop median_lum x_t_* if inrange(date,yq(2000,1),yq(2004,4)), absorb(cvemun) vce(robust) 
+	cap test $instruments_c $instruments 
+	estadd scalar Fstat = `e(F)'
+	estadd scalar pval = `r(p)'
+	
+	qui cvlasso trend4_`var' $instruments $instruments_c if inrange(date,yq(2000,1),yq(2004,4)), fe
+	qui lasso2 trend4_`var' $instruments $instruments_c if inrange(date,yq(2000,1),yq(2004,4)), l(`lopt') fe 
+	eststo : reghdfe trend16_`var' `e(selected)' median_lum lgpop if inrange(date,yq(2000,1),yq(2004,4)), absorb(cvemun) vce(robust)
+	cap test `e(selected)' 
+	estadd scalar Fstat = `e(F)'
+	cap estadd scalar pval = `r(p)'	
 }			  
 			  
-esttab using "$directorio/Tables/reg_results/pretime_trends_instrument.csv", se r2 ${star} b(a2)  replace keep($instruments_c $instruments lgpop median_lum) scalars("Fstat Fstat")		
+esttab using "$directorio/Tables/reg_results/pretime_trends_instrument.csv", se r2 ${star} b(a2)  replace keep($instruments_c $instruments lgpop median_lum) scalars("Fstat Fstat" "pval pval")		
 	  
 
 *Panel IV
 
 eststo clear
-xtivreg e9 median_lum lgpop x_t_* (log_ind = $instruments_c $instruments) if inrange(date,yq(2005,1),yq(2008,4)), fe vce(cluster cvemun) 
+xtivreg lg1_afiliados_imss median_lum lgpop x_t_* (log_ind = $instruments_c $instruments) if inrange(date,yq(2005,1),yq(2008,4)), fe vce(cluster cvemun) 
 cap drop esample 
 gen esample = (e(sample)==1)
 eststo : xtreg log_ind $instruments_c $instruments median_lum lgpop x_t_* if esample==1 & inrange(date,yq(2005,1),yq(2008,4)), fe vce(cluster cvemun) 
 qui levelsof cvemun if e(sample)==1 
 local num_mun = `r(r)'
 local fstat = `e(F)'
+test $instruments_c $instruments 
+local pval = `r(p)'
+
 su log_ind if e(sample)==1
 estadd scalar DepVarMean = `r(mean)'
 estadd scalar Fstat = `fstat'
+estadd scalar pval = `pval'
 estadd scalar num_mun = `num_mun'
 
-foreach var in p_t p1 p4 p7 p9 e_t e1 e4 e7 e9 {
+
+foreach var of varlist p_t_ p_50_ p_250_ p_1000m_ e_t_ e_50_ e_250_ e_1000m_ /// B-C
+					lg1_eventuales* lg1_permanentes* lg1_ta_femenino lg1_ta_masculino /// imss consolidated 
+						lg1_afiliados_imss* lg1_trab_eventual_urb* lg1_trab_eventual_campo* lg1_trab_perm_urb* lg1_trab_perm_campo* lg1_ta_sal* lg1_teu_sal* lg1_tec_sal* lg1_tpu_sal* lg1_tpc_sal* /// asg dep var
+						{
 
 	eststo : xtivreg `var' median_lum lgpop x_t_* (log_ind = $instruments_c $instruments) if inrange(date,yq(2005,1),yq(2008,4)), fe vce(cluster cvemun) 
 	qui levelsof cvemun if e(sample)==1 
@@ -98,7 +140,7 @@ foreach var in p_t p1 p4 p7 p9 e_t e1 e4 e7 e9 {
 	estadd scalar num_mun = `num_mun'	
 }
 
-esttab using "$directorio/Tables/reg_results/paneliv_sp.csv", se r2 ${star} b(a2)  replace scalars("DepVarMean DepVarMean" "Fstat Fstat" "num_mun num_mun")		
+esttab using "$directorio/Tables/reg_results/paneliv_sp.csv", se r2 ${star} b(a2)  replace scalars("DepVarMean DepVarMean" "Fstat Fstat" "pval pval" "num_mun num_mun")		
 	 
 
 ********************************************************************************
@@ -128,7 +170,7 @@ forvalues year = 2005/2008 {
 		vl modify inst_`year'_`quarter' = inst_`year'_`quarter' - (dummy_ent* median_lum lgpop x_t_*)
 
 		*IV
-		ivreg2 e9 ${controls_`year'_`quarter'} (treat = ${inst_`year'_`quarter'}), robust
+		ivreg2 lg1_afiliados_imss ${controls_`year'_`quarter'} (treat = ${inst_`year'_`quarter'}), robust
 		cap drop esample_c
 		gen esample_c = (e(sample)==1)
 			
@@ -165,7 +207,10 @@ twoway (rarea coef2 coef3 n, color(blue%25)) (scatter coef1 n, color(black) conn
 graph export "$directorio/Figuras/IV_FS.pdf", replace	
 
 
-foreach var in p_t p1 p4 p7 p9 e_t e1 e4 e7 e9 {
+foreach var of varlist p_t_ p_50_ p_250_ p_1000m_ e_t_ e_50_ e_250_ e_1000m_ /// B-C
+						lg1_eventuales* lg1_permanentes* lg1_ta_femenino lg1_ta_masculino /// imss consolidated 
+						lg1_afiliados_imss* lg1_trab_eventual_urb* lg1_trab_eventual_campo* lg1_trab_perm_urb* lg1_trab_perm_campo* lg1_ta_sal* lg1_teu_sal* lg1_tec_sal* lg1_tpu_sal* lg1_tpc_sal*  /// asg dep var
+						{
 	preserve
 	
 	matrix iv = J(16,4,.)

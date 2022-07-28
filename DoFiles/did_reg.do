@@ -20,115 +20,252 @@ version 17.0
 */
 
 use  "Data Created\DiD_DB.dta", clear	
+keep if year<=2011
+keep SP_b* cvemun ent date median_lum x_t_* lgpop pob2000 bal_48* /// treatvar & controls
+		p_t p_50 p_250 p_1000m e_t e_50 e_250 e_1000m   /// emp dep var  
+		lg_eventuales* lg_permanentes* lg_ta_femenino lg_ta_masculino /// imss consolidated
+		lg_afiliados_imss* lg_trab_eventual_urb* lg_trab_eventual_campo* lg_trab_perm_urb* lg_trab_perm_campo* lg_ta_sal* lg_teu_sal* lg_tec_sal* lg_tpu_sal* lg_tpc_sal* lg_masa_sal_* /// asg dep var  
+		lg_total_d* /// mortality dep var
+		sexo salario_promedio /// other vars
 
 *Quarter of implementation
-by cvemun : gen q_SP = date if SP_b_p==0
-by cvemun : egen q_imp = mean(q_SP)
+bysort cvemun : gen q_SP = date if SP_b_p==0
+bysort cvemun : egen q_imp = mean(q_SP)
 
 gen date2 = date*date
 gen date3 = date2*date
+
+gen median_lum2 = median_lum*median_lum
+gen median_lum3 = median_lum2*median_lum
+
 
 *********** REGRESSIONS *************
 *************************************
 *************************************
 
-
-tab SP_b_p, gen(SP_b_p)
-	
-
-foreach var in /*p_t p1 p4 p7 p9 e_t e1 e4 e7 e9*/ total_d total_d_asist total_d_noasist total_d_imss_e total_d_imss total_d_sp total_d_cov_sp total_d_cov_isp total_d_sp_cov_sp total_d_imss_cov_sp { 
+******************************** B - C *****************************************
+foreach var of varlist p_t p_50 p_250 p_1000m e_t e_50 e_250 e_1000m { 
 
 	eststo clear
 	
-	*Condition on balanced municipalities
-	eststo : xi : reghdfe `var' i.ent*i.date c.median_lum#i.date median_lum SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16  lgpop x_t_* [aw=pob2000] if bal_48==1, absorb(cvemun) cluster(cvemun)
+	*TWFE 
+	eststo : xi : xtreg `var' i.date lgpop x_t_* SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 [aw=pob2000] if bal_48==1, fe  cluster(cvemun)
 		qui levelsof cvemun if e(sample)==1 
 		local num_mun = `r(r)'
 		su `var' if e(sample)==1
 		estadd scalar DepVarMean = `r(mean)'
 		estadd scalar num_mun = `num_mun'	
-	eststo : xi : reghdfe `var' c.date#i.q_imp i.ent*i.date c.median_lum#i.date median_lum SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16  lgpop x_t_* [aw=pob2000] if bal_48==1, absorb(cvemun) cluster(cvemun)
+		
+	*B-C specification
+	eststo : xi : xtreg `var' i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 [aw=pob2000] if bal_48==1, fe  cluster(cvemun)
 		qui levelsof cvemun if e(sample)==1 
 		local num_mun = `r(r)'
 		su `var' if e(sample)==1
 		estadd scalar DepVarMean = `r(mean)'
 		estadd scalar num_mun = `num_mun'	
-	
-	xi : reghdfe `var' i.ent*i.date c.median_lum#i.date median_lum SP_b_p1-SP_b_p15 SP_b_p17-SP_b_p37 lgpop x_t_* [aw=pob2000] if bal_48==1,  absorb(cvemun) cluster(cvemun)
-	matrix event_SP_b_c = J(37,5,.)	
-	forvalues j = 1/37 {
-		if `j'!=16 {
-			matrix event_SP_b_c[`j',1] = _b[SP_b_p`j']
-			matrix event_SP_b_c[`j',2] = _b[SP_b_p`j'] + invnormal(0.975)*_se[SP_b_p`j']
-			matrix event_SP_b_c[`j',3] = _b[SP_b_p`j'] - invnormal(0.975)*_se[SP_b_p`j']
-			matrix event_SP_b_c[`j',4] = _b[SP_b_p`j'] + invnormal(0.95)*_se[SP_b_p`j']
-			matrix event_SP_b_c[`j',5] = _b[SP_b_p`j'] - invnormal(0.95)*_se[SP_b_p`j']		
-		}
-	}
-	
-	*All municipalities
-	eststo : xi : reghdfe `var' i.ent*i.date c.median_lum#i.date median_lum SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16  lgpop x_t_* [aw=pob2000], absorb(cvemun) cluster(cvemun)
+		
+	*Luminosity
+	eststo : xi : xtreg `var' i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 [aw=pob2000] if bal_48==1, fe cluster(cvemun)
 		qui levelsof cvemun if e(sample)==1 
 		local num_mun = `r(r)'
 		su `var' if e(sample)==1
 		estadd scalar DepVarMean = `r(mean)'
 		estadd scalar num_mun = `num_mun'	
-	eststo : xi : reghdfe `var' c.date#i.q_imp i.ent*i.date c.median_lum#i.date median_lum SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16  lgpop x_t_* [aw=pob2000], absorb(cvemun) cluster(cvemun)
+		
+	*Luminosity (+ other controls)
+	eststo : xi : xtreg `var' i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* sexo salario_promedio SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 [aw=pob2000] if bal_48==1, fe cluster(cvemun)
 		qui levelsof cvemun if e(sample)==1 
 		local num_mun = `r(r)'
 		su `var' if e(sample)==1
 		estadd scalar DepVarMean = `r(mean)'
 		estadd scalar num_mun = `num_mun'	
-	
-	xi : reghdfe `var' i.ent*i.date c.median_lum#i.date median_lum SP_b_p1-SP_b_p15 SP_b_p17-SP_b_p37 lgpop x_t_* [aw=pob2000],  absorb(cvemun) cluster(cvemun)
-	matrix event_SP_b = J(37,5,.)	
-	forvalues j = 1/37 {
-		if `j'!=16 {
-			matrix event_SP_b[`j',1] = _b[SP_b_p`j']
-			matrix event_SP_b[`j',2] = _b[SP_b_p`j'] + invnormal(0.975)*_se[SP_b_p`j']
-			matrix event_SP_b[`j',3] = _b[SP_b_p`j'] - invnormal(0.975)*_se[SP_b_p`j']
-			matrix event_SP_b[`j',4] = _b[SP_b_p`j'] + invnormal(0.95)*_se[SP_b_p`j']
-			matrix event_SP_b[`j',5] = _b[SP_b_p`j'] - invnormal(0.95)*_se[SP_b_p`j']		
-		}
-	}
-
+		
+	*Luminosity (+ quarter of implementation)
+	eststo : xi : xtreg `var' i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* c.date#i.q_imp SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 [aw=pob2000] if bal_48==1, fe cluster(cvemun)
+		qui levelsof cvemun if e(sample)==1 
+		local num_mun = `r(r)'
+		su `var' if e(sample)==1
+		estadd scalar DepVarMean = `r(mean)'
+		estadd scalar num_mun = `num_mun'	
+		
+	*Luminosity (+ other controls) (+ quarter of implementation)
+	eststo : xi : xtreg `var' i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* sexo salario_promedio c.date#i.q_imp SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 [aw=pob2000] if bal_48==1, fe cluster(cvemun)
+		qui levelsof cvemun if e(sample)==1 
+		local num_mun = `r(r)'
+		su `var' if e(sample)==1
+		estadd scalar DepVarMean = `r(mean)'
+		estadd scalar num_mun = `num_mun'
+		
 
 	esttab using "$directorio/Tables/reg_results/did_reg_`var'.csv", se r2 ${star} b(a2)  replace keep(SP*) scalars("DepVarMean DepVarMean" "num_mun num_mun")	
 
-
-********************************************************************************
-********************************************************************************
-
-
-********** EVENT STUDIES ************
-*************************************
-*************************************
-	preserve
+}	
 	
-	clear 
-	svmat event_SP_b_c
-	svmat event_SP_b
 	
-	cap drop period
-	gen period = _n - 17 if inrange(_n,1,37)
-	save  "_aux\event_did_`var'.dta", replace
+******************************** IMSS ******************************************
+foreach var of varlist lg_eventuales* lg_permanentes* lg_ta_femenino lg_ta_masculino /// imss consolidated
+		lg_afiliados_imss* lg_trab_eventual_urb* lg_trab_eventual_campo* lg_trab_perm_urb* lg_trab_perm_campo* lg_ta_sal* lg_teu_sal* lg_tec_sal* lg_tpu_sal* lg_tpc_sal* lg_masa_sal_* /// asg
+		{ 
 
-	use  "_aux\event_did_`var'.dta", clear
-
-	twoway (scatter event_SP_b_c1 period, color(black) lcolor(gs10%50) msize(medium) connect(line)) /// 
-		(rcap event_SP_b_c2 event_SP_b_c3 period, color(navy%50)) /// 
-		(rcap event_SP_b_c4 event_SP_b_c5 period, color(navy)) ///
-		, legend(off) xline(-1) yline(0) xtitle("Period relative to treatment")
-	graph export "$directorio/Figuras/did_event_`var'_c.pdf", replace	
-			
-	twoway (scatter event_SP_b1 period, color(black) lcolor(gs10%50) msize(medium) connect(line)) /// 
-		(rcap event_SP_b2 event_SP_b3 period, color(navy%50)) /// 
-		(rcap event_SP_b4 event_SP_b5 period, color(navy)) ///
-		, legend(off) xline(-1) yline(0) xtitle("Period relative to treatment")
-	graph export "$directorio/Figuras/did_event_`var'.pdf", replace	
+	eststo clear
 	
+	*TWFE 
+	eststo : xi : xtreg `var' i.date lgpop x_t_* SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 [aw=pob2000] if bal_48_imss==1, fe  cluster(cvemun)
+		qui levelsof cvemun if e(sample)==1 
+		local num_mun = `r(r)'
+		su `var' if e(sample)==1
+		estadd scalar DepVarMean = `r(mean)'
+		estadd scalar num_mun = `num_mun'	
+		
+	*B-C specification
+	eststo : xi : xtreg `var' i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 [aw=pob2000] if bal_48_imss==1, fe  cluster(cvemun)
+		qui levelsof cvemun if e(sample)==1 
+		local num_mun = `r(r)'
+		su `var' if e(sample)==1
+		estadd scalar DepVarMean = `r(mean)'
+		estadd scalar num_mun = `num_mun'	
+		
+	*Luminosity
+	eststo : xi : xtreg `var' i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 [aw=pob2000] if bal_48_imss==1, fe cluster(cvemun)
+		qui levelsof cvemun if e(sample)==1 
+		local num_mun = `r(r)'
+		su `var' if e(sample)==1
+		estadd scalar DepVarMean = `r(mean)'
+		estadd scalar num_mun = `num_mun'	
+		
+	*Luminosity (+ other controls)
+	eststo : xi : xtreg `var' i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* sexo salario_promedio SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 [aw=pob2000] if bal_48_imss==1, fe cluster(cvemun)
+		qui levelsof cvemun if e(sample)==1 
+		local num_mun = `r(r)'
+		su `var' if e(sample)==1
+		estadd scalar DepVarMean = `r(mean)'
+		estadd scalar num_mun = `num_mun'	
+		
+	*Luminosity (+ quarter of implementation)
+	eststo : xi : xtreg `var' i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* c.date#i.q_imp SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 [aw=pob2000] if bal_48_imss==1, fe cluster(cvemun)
+		qui levelsof cvemun if e(sample)==1 
+		local num_mun = `r(r)'
+		su `var' if e(sample)==1
+		estadd scalar DepVarMean = `r(mean)'
+		estadd scalar num_mun = `num_mun'	
+		
+	*Luminosity (+ other controls) (+ quarter of implementation)
+	eststo : xi : xtreg `var' i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* sexo salario_promedio c.date#i.q_imp SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 [aw=pob2000] if bal_48_imss==1, fe cluster(cvemun)
+		qui levelsof cvemun if e(sample)==1 
+		local num_mun = `r(r)'
+		su `var' if e(sample)==1
+		estadd scalar DepVarMean = `r(mean)'
+		estadd scalar num_mun = `num_mun'
+		
 
+	esttab using "$directorio/Tables/reg_results/did_reg_`var'.csv", se r2 ${star} b(a2)  replace keep(SP*) scalars("DepVarMean DepVarMean" "num_mun num_mun")	
+
+}		
+
+
+******************************** MORTALITY *************************************
+foreach var of varlist lg_total_d* { 
+
+	eststo clear
 	
-	restore
+	*TWFE 
+	eststo : xi : xtreg `var' i.date lgpop x_t_* SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 [aw=pob2000] if bal_48_imss==1, fe  cluster(cvemun)
+		qui levelsof cvemun if e(sample)==1 
+		local num_mun = `r(r)'
+		su `var' if e(sample)==1
+		estadd scalar DepVarMean = `r(mean)'
+		estadd scalar num_mun = `num_mun'	
+		
+	*B-C specification
+	eststo : xi : xtreg `var' i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 [aw=pob2000] if bal_48_imss==1, fe  cluster(cvemun)
+		qui levelsof cvemun if e(sample)==1 
+		local num_mun = `r(r)'
+		su `var' if e(sample)==1
+		estadd scalar DepVarMean = `r(mean)'
+		estadd scalar num_mun = `num_mun'	
+		
+	*Luminosity
+	eststo : xi : xtreg `var' i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 [aw=pob2000] if bal_48_imss==1, fe cluster(cvemun)
+		qui levelsof cvemun if e(sample)==1 
+		local num_mun = `r(r)'
+		su `var' if e(sample)==1
+		estadd scalar DepVarMean = `r(mean)'
+		estadd scalar num_mun = `num_mun'	
+		
+	*Luminosity (+ other controls)
+	eststo : xi : xtreg `var' i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* sexo salario_promedio SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 [aw=pob2000] if bal_48_imss==1, fe cluster(cvemun)
+		qui levelsof cvemun if e(sample)==1 
+		local num_mun = `r(r)'
+		su `var' if e(sample)==1
+		estadd scalar DepVarMean = `r(mean)'
+		estadd scalar num_mun = `num_mun'	
+		
+	*Luminosity (+ quarter of implementation)
+	eststo : xi : xtreg `var' i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* c.date#i.q_imp SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 [aw=pob2000] if bal_48_imss==1, fe cluster(cvemun)
+		qui levelsof cvemun if e(sample)==1 
+		local num_mun = `r(r)'
+		su `var' if e(sample)==1
+		estadd scalar DepVarMean = `r(mean)'
+		estadd scalar num_mun = `num_mun'	
+		
+	*Luminosity (+ other controls) (+ quarter of implementation)
+	eststo : xi : xtreg `var' i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* sexo salario_promedio c.date#i.q_imp SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 [aw=pob2000] if bal_48_imss==1, fe cluster(cvemun)
+		qui levelsof cvemun if e(sample)==1 
+		local num_mun = `r(r)'
+		su `var' if e(sample)==1
+		estadd scalar DepVarMean = `r(mean)'
+		estadd scalar num_mun = `num_mun'
 
-}
+*-------------------------------------------------------------------------------
+
+	*TWFE 
+	eststo : xi : xtreg `var' i.date lgpop x_t_* SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 [aw=pob2000] if bal_48_d==1, fe  cluster(cvemun)
+		qui levelsof cvemun if e(sample)==1 
+		local num_mun = `r(r)'
+		su `var' if e(sample)==1
+		estadd scalar DepVarMean = `r(mean)'
+		estadd scalar num_mun = `num_mun'	
+		
+	*B-C specification
+	eststo : xi : xtreg `var' i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 [aw=pob2000] if bal_48_d==1, fe  cluster(cvemun)
+		qui levelsof cvemun if e(sample)==1 
+		local num_mun = `r(r)'
+		su `var' if e(sample)==1
+		estadd scalar DepVarMean = `r(mean)'
+		estadd scalar num_mun = `num_mun'	
+		
+	*Luminosity
+	eststo : xi : xtreg `var' i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 [aw=pob2000] if bal_48_d==1, fe cluster(cvemun)
+		qui levelsof cvemun if e(sample)==1 
+		local num_mun = `r(r)'
+		su `var' if e(sample)==1
+		estadd scalar DepVarMean = `r(mean)'
+		estadd scalar num_mun = `num_mun'	
+		
+	*Luminosity (+ other controls)
+	eststo : xi : xtreg `var' i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* sexo salario_promedio SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 [aw=pob2000] if bal_48_d==1, fe cluster(cvemun)
+		qui levelsof cvemun if e(sample)==1 
+		local num_mun = `r(r)'
+		su `var' if e(sample)==1
+		estadd scalar DepVarMean = `r(mean)'
+		estadd scalar num_mun = `num_mun'	
+		
+	*Luminosity (+ quarter of implementation)
+	eststo : xi : xtreg `var' i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* c.date#i.q_imp SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 [aw=pob2000] if bal_48_d==1, fe cluster(cvemun)
+		qui levelsof cvemun if e(sample)==1 
+		local num_mun = `r(r)'
+		su `var' if e(sample)==1
+		estadd scalar DepVarMean = `r(mean)'
+		estadd scalar num_mun = `num_mun'	
+		
+	*Luminosity (+ other controls) (+ quarter of implementation)
+	eststo : xi : xtreg `var' i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* sexo salario_promedio c.date#i.q_imp SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 [aw=pob2000] if bal_48_d==1, fe cluster(cvemun)
+		qui levelsof cvemun if e(sample)==1 
+		local num_mun = `r(r)'
+		su `var' if e(sample)==1
+		estadd scalar DepVarMean = `r(mean)'
+		estadd scalar num_mun = `num_mun'
+
+	esttab using "$directorio/Tables/reg_results/did_reg_`var'.csv", se r2 ${star} b(a2)  replace keep(SP*) scalars("DepVarMean DepVarMean" "num_mun num_mun")	
+
+}		
