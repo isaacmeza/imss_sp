@@ -36,6 +36,9 @@ gen year = yofd(dofq(date))
 gen quarter = quarter(dofq(date))
 drop if year<2000
 
+*Pool together CDMX
+replace mun_resid = 0000 if ent_resid==9
+
 *Generate cvemun
 gen cvemun = ent_ocurr*1000 + mun_ocurr
 drop if cvemun>33000
