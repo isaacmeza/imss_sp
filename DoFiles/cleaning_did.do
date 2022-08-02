@@ -165,64 +165,107 @@ foreach var of varlist total_d* {
 *-------------------------------------------------------------------------------
 *Employees
 gen e_t = log(emp_t)
-gen e_50 = log(emp_size_1+emp_size_2_5+emp_size_6_50)
+gen e_1 = log(emp_size_1) 
+gen e_50 = log(emp_size_2_5+emp_size_6_50)
 gen e_250 = log(emp_size_51_250)
 gen e_1000m = log(emp_size_251_500+emp_size_501_1000+emp_size_1000)
 
 gen e_t_ = log(emp_t + 1)
-gen e_50_ = log(emp_size_1+emp_size_2_5+emp_size_6_50 + 1)
+gen e_1_ = log(emp_size_1 + 1) 
+gen e_50_ = log(emp_size_2_5+emp_size_6_50 + 1)
 gen e_250_ = log(emp_size_51_250 + 1)
 gen e_1000m_ = log(emp_size_251_500+emp_size_501_1000+emp_size_1000 + 1)
 
 
 *Employers
 gen p_t = log(pat_t)
-gen p_50 = log(pat_size_1+pat_size_2_5+pat_size_6_50) 
+gen p_1 = log(pat_size_1) 
+gen p_50 = log(pat_size_2_5+pat_size_6_50) 
 gen p_250 = log(pat_size_51_250)
 gen p_1000m = log(pat_size_251_500+pat_size_501_1000+pat_size_1000)
 
 gen p_t_ = log(pat_t + 1)
-gen p_50_ = log(pat_size_1+pat_size_2_5+pat_size_6_50 + 1) 
+gen p_1_ = log(pat_size_1 + 1) 
+gen p_50_ = log(pat_size_2_5+pat_size_6_50 + 1) 
 gen p_250_ = log(pat_size_51_250 + 1)
 gen p_1000m_ = log(pat_size_251_500+pat_size_501_1000+pat_size_1000 + 1)
 
 
 	*IMSS
-foreach var of varlist eventuales* permanentes* ta_femenino ta_masculino ta aseg_masculino aseg_femenino aseg patrones salario_promedio {
+foreach var of varlist eventuales permanentes ta_femenino ta_masculino salario_promedio voluntarios_masculino voluntarios_femenino voluntarios {
 	gen lg_`var' = log(`var')
 	gen lg1_`var' = log(`var' + 1)
 }
 
+gen trab_eventual = trab_eventual_urb + trab_eventual_campo
+gen te_sal = teu_sal + tec_sal
+gen trab_perm = trab_perm_urb + trab_perm_campo
+gen tp_sal = tpu_sal + tpc_sal
+gen trab_campo = trab_eventual_campo + trab_perm_campo
+gen tc_sal = tec_sal + tpc_sal
+gen trab_urb = trab_eventual_urb + trab_perm_urb
+gen tu_sal = teu_sal + tpu_sal
+
+foreach size in 1 2 3 4 5 6 7 {
+	gen trab_eventual`size' = trab_eventual_urb`size' + trab_eventual_campo`size'
+	gen te_sal`size' = teu_sal`size' + tec_sal`size'
+	gen trab_perm`size' = trab_perm_urb`size' + trab_perm_campo`size'
+	gen tp_sal`size' = tpu_sal`size' + tpc_sal`size'
+	gen trab_campo`size' = trab_eventual_campo`size' + trab_perm_campo`size'
+	gen tc_sal`size' = tec_sal`size' + tpc_sal`size'
+	gen trab_urb`size' = trab_eventual_urb`size' + trab_perm_urb`size'
+	gen tu_sal`size' = teu_sal`size' + tpu_sal`size'
+}
+
+
 	*ASG
-foreach var in asegurados afiliados_imss trab_eventual_urb trab_eventual_campo trab_perm_urb trab_perm_campo ta_sal teu_sal tec_sal tpu_sal tpc_sal {
+foreach var in asegurados afiliados_imss trab_eventual trab_perm trab_campo trab_urb ta_sal {
 	gen lg_`var' = log(`var')
-	gen lg_`var'_50 = log(`var'1 + `var'2 + `var'3)
+	gen lg_`var'_1 = log(`var'1)
+	gen lg_`var'_50 = log(`var'2 + `var'3)
 	gen lg_`var'_250 = log(`var'4)
 	gen lg_`var'_1000m = log(`var'5 + `var'6 + `var'7)
 	
 	gen lg1_`var' = log(`var' + 1)
-	gen lg1_`var'_50 = log(`var'1 + `var'2 + `var'3 + 1)
+	gen lg1_`var'_1 = log(`var'1 + 1)
+	gen lg1_`var'_50 = log(`var'2 + `var'3 + 1)
 	gen lg1_`var'_250 = log(`var'4 + 1)
 	gen lg1_`var'_1000m = log(`var'5 + `var'6 + `var'7 + 1)
 }
+
 	
-foreach var in ta teu tec tpu tpc {
-	gen lg_masa_sal_`var' = log(masa_sal_`var')
-	replace lg_masa_sal_`var' = 0 if missing(lg_masa_sal_`var')
+gen masa_sal_te = (masa_sal_teu*teu_sal + masa_sal_tec*tec_sal)/(te_sal)
+gen masa_sal_tp = (masa_sal_tpu*tpu_sal + masa_sal_tpc*tpc_sal)/(tp_sal)
+gen masa_sal_tc = (masa_sal_tec*tec_sal + masa_sal_tpc*tpc_sal)/(tc_sal)
+gen masa_sal_tu = (masa_sal_teu*teu_sal + masa_sal_tpu*tpu_sal)/(tu_sal)
+
+foreach size in 1 2 3 4 5 6 7 {
+	gen masa_sal_te`size' = (masa_sal_teu`size'*teu_sal`size' + masa_sal_tec`size'*tec_sal`size')/(te_sal`size')
+	gen masa_sal_tp`size' = (masa_sal_tpu`size'*tpu_sal`size' + masa_sal_tpc`size'*tpc_sal`size')/(tp_sal`size')
+	gen masa_sal_tc`size' = (masa_sal_tec`size'*tec_sal`size' + masa_sal_tpc`size'*tpc_sal`size')/(tc_sal`size')
+	gen masa_sal_tu`size' = (masa_sal_teu`size'*teu_sal`size' + masa_sal_tpu`size'*tpu_sal`size')/(tu_sal`size')
+}
 	
-	gen lg_masa_sal_`var'_50 = log((masa_sal_`var'1*`var'_sal1 + masa_sal_`var'2*`var'_sal2 + masa_sal_`var'3*`var'_sal3)/(`var'_sal1 + `var'_sal2 + `var'_sal3))
-	replace lg_masa_sal_`var'_50 = 0 if missing(lg_masa_sal_`var'_50)
+foreach var in ta te tp tc tu {
+	gen lg1_masa_sal_`var' = log(masa_sal_`var' + 1)
+	replace lg1_masa_sal_`var' = 0 if missing(lg1_masa_sal_`var')
 	
-	gen lg_masa_sal_`var'_250 = log(masa_sal_`var'4)
-	replace lg_masa_sal_`var'_250 = 0 if missing(lg_masa_sal_`var'_250)
+	gen lg1_masa_sal_`var'_1 = log((masa_sal_`var'1*`var'_sal1)/(`var'_sal1) + 1)
+	replace lg1_masa_sal_`var'_1 = 0 if missing(lg1_masa_sal_`var'_1)	
 	
-	gen lg_masa_sal_`var'_1000m = log((masa_sal_`var'5*`var'_sal5 + masa_sal_`var'6*`var'_sal6 + masa_sal_`var'7*`var'_sal7)/(`var'_sal5 + `var'_sal6 + `var'_sal7))
-	replace lg_masa_sal_`var'_1000m = 0 if missing(lg_masa_sal_`var'_1000m)
+	gen lg1_masa_sal_`var'_50 = log((masa_sal_`var'2*`var'_sal2 + masa_sal_`var'3*`var'_sal3)/(`var'_sal2 + `var'_sal3) + 1)
+	replace lg1_masa_sal_`var'_50 = 0 if missing(lg1_masa_sal_`var'_50)
+	
+	gen lg1_masa_sal_`var'_250 = log(masa_sal_`var'4 + 1)
+	replace lg1_masa_sal_`var'_250 = 0 if missing(lg1_masa_sal_`var'_250)
+	
+	gen lg1_masa_sal_`var'_1000m = log((masa_sal_`var'5*`var'_sal5 + masa_sal_`var'6*`var'_sal6 + masa_sal_`var'7*`var'_sal7)/(`var'_sal5 + `var'_sal6 + `var'_sal7) + 1)
+	replace lg1_masa_sal_`var'_1000m = 0 if missing(lg1_masa_sal_`var'_1000m)
 }	
 	
 *Mortality
 foreach var of varlist total_d* {
-	gen lg_`var' = log(`var')
+	gen lg_`var' = log(`var' + 1)
 }
 
 
@@ -274,10 +317,19 @@ foreach var of varlist SP SP_b SP_c {
 
 	by cvemun : egen tmax = max(TT*date)
 	gen `var'_p = date - tmax	
+	
 	replace `var'_p = -16 if `var'_p<-16
 	replace `var'_p = . if `var'_p>48
-	replace `var'_p = 20 if `var'_p>20 & !missing(`var'_p)
+	replace `var'_p = 24 if `var'_p>24 & !missing(`var'_p)
 	drop TT tmax
+	
+	*Collapsed period of treatment
+	gen `var'_col = .
+	local k = -10
+	forvalues i = -40(4)80 {
+		replace `var'_col = `k' if inrange(`var'_p, `i',`=`i'+3')
+		local k = `k' + 1
+	}
 }
 
 sort cvemun date

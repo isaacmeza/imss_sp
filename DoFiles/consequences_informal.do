@@ -8,8 +8,8 @@ version 17.0
 * Author:	Isaac M
 * Machine:	Isaac M 											
 * Date of creation: June. 26, 2022
-* Last date of modification: 
-* Modifications: 
+* Last date of modification: Aug. 1, 2022
+* Modifications: Remove ENE
 * Files used:     
 		- 
 * Files created:  
@@ -23,7 +23,6 @@ version 17.0
 use "$directorio\Data Created\sdemt_enoe.dta", clear
 merge m:1 year quarter ent mun using  "$directorio\Data Created\luminosity.dta", keep(1 3)
 merge 1:1 cd_a ent con v_sel n_hog h_mud n_ren year quarter using "$directorio\Data Created\coe1t_enoe.dta", nogen
-append using "$directorio\Data Created\ene.dta", gen(ene)
 */
 use "$directorio\_aux\master.dta", clear
 

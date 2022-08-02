@@ -7,9 +7,9 @@ version 17.0
 * Name of file:	
 * Author:	Isaac M
 * Machine:	Isaac M 											
-* Date of creation:	
-* Last date of modification: June. 06, 2022
-* Modifications: 
+* Date of creation:	June. 06, 2022
+* Last date of modification: Aug. 1, 2022
+* Modifications: Remove ENE
 * Files used:     
 		- 
 * Files created:  
@@ -21,7 +21,6 @@ version 17.0
 /*
 use "$directorio\Data Created\sdemt_enoe.dta", clear
 merge 1:1 cd_a ent con v_sel n_hog h_mud n_ren year quarter using "$directorio\Data Created\coe1t_enoe.dta", nogen
-append using "$directorio\Data Created\ene.dta", gen(ene)
 */
 use "$directorio\_aux\master.dta", clear
 
@@ -46,7 +45,6 @@ gen byte nosat = (p4g!=3) if p4g!=9 & !missing(p4g)
 
 *Formal/Informal/Desocupado
 gen byte class_trab = informal
-replace class_trab = (tue2==5) if tue2!=0 & ene==1
 replace class_trab = 2 if missing(class_trab) & clase1==1
 
 
@@ -56,22 +54,16 @@ replace class_trab = 2 if missing(class_trab) & clase1==1
 ***********************************
 
 gen time = .
-replace time = 1 if inrange(year,2000,2004)
-replace time = 2 if inrange(year,2005,2010)
-replace time = 3 if inrange(year,2011,2015)
+replace time = 1 if inrange(year,2005,2010)
+replace time = 2 if inrange(year,2011,2015)
 
-gen informal_ = informal
-replace informal_ = 0 if ene==1
-gen nosat_ = nosat
-replace nosat_ = 0 if ene==1
-
-iebaltab informal_ noimss nosat_ [fw=fac], grpvar(time) save("$directorio\Tables\reg_results\ss_shareinf.xlsx") total vce(robust)  pttest replace 
+iebaltab informal noimss nosat [fw=fac], grpvar(time) save("$directorio\Tables\reg_results\ss_shareinf.xlsx") total vce(robust)  pttest replace 
 
 qui putexcel set "$directorio\Tables\reg_results\ss_shareinf.xlsx", sheet("Sheet1") modify	
 
 local k = 5
-foreach var in informal_ noimss nosat_ {
-	forvalues i=1/3 {
+foreach var in informal noimss nosat {
+	forvalues i=1/2 {
 		local Col = substr(c(ALPHA),`=-1+`i'*4',1)
 		su `var' if time==`i'
 		qui putexcel `Col'`k'=`r(N)'
@@ -80,15 +72,11 @@ foreach var in informal_ noimss nosat_ {
 }
 
 
-
 ***********************************
 **** 		  CATPLOT	  	  *****
 ***********************************
 
-graph hbar (mean) noimss if scian!=0 & ene==1, over(scian) ytitle("No IMSS %")
-graph export "$directorio/Figuras/catplot_scian_ene.pdf", replace	
-
-graph hbar (mean) noimss if scian!=0 & ene==0, over(scian) ytitle("No IMSS %")
+graph hbar (mean) noimss if scian!=0, over(scian) ytitle("No IMSS %")
 graph export "$directorio/Figuras/catplot_scian_enoe.pdf", replace	
 
 
@@ -96,7 +84,7 @@ graph export "$directorio/Figuras/catplot_scian_enoe.pdf", replace
 **** 			Corr  		  *****
 ***********************************
 
-corr informal noimss nosat  [fw=fac] if ene==0
+corr informal noimss nosat  [fw=fac] 
 qui putexcel set "$directorio\Tables\corr_informal.xlsx", sheet("corr_informal") modify	
 qui putexcel B6=matrix(r(C))  
 

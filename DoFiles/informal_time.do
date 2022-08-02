@@ -7,9 +7,9 @@ version 17.0
 * Name of file:	
 * Author:	Isaac M
 * Machine:	Isaac M 											
-* Date of creation:	
-* Last date of modification: June. 06, 2022
-* Modifications: 
+* Date of creation:	 June. 06, 2022
+* Last date of modification: Aug. 1, 2022
+* Modifications: Remove ENE
 * Files used:     
 		- 
 * Files created:  
@@ -21,7 +21,6 @@ version 17.0
 /*
 use "$directorio\Data Created\sdemt_enoe.dta", clear
 merge 1:1 cd_a ent con v_sel n_hog h_mud n_ren year quarter using "$directorio\Data Created\coe1t_enoe.dta", nogen
-append using "$directorio\Data Created\ene.dta", gen(ene)
 */
 use "$directorio\_aux\master.dta", clear
 
@@ -46,7 +45,6 @@ gen byte nosat = (p4g!=3) if p4g!=9 & !missing(p4g)
 
 *Formal/Informal/Desocupado
 gen byte class_trab = informal
-replace class_trab = (tue2==5) if tue2!=0 & ene==1
 replace class_trab = 2 if missing(class_trab) & clase1==1
 
 
@@ -69,7 +67,7 @@ twoway (rarea informal zero date if date>=`=yq(2005,1)', color(navy%20)) ///
 	(line noimss date, lwidth(medthick) lcolor(blue)) ///
 	(line nosat date, lwidth(medthick) lcolor(black)) ///
 	, legend(order(1 "Informal" 2 "Formal" 3 "Unemployed" 4 "No IMSS" 5 "No SAT") size(small) rows(2) pos(6)) graphregion(color(white)) ///
-	xtitle("") xlabel(160(15)223,format(%tq) labsize(small)) xline(`=yq(2005,1)', lpattern(dash) lcolor(black%75))
+	xtitle("") xlabel(`=yq(2005,1)'(8)224,format(%tq) labsize(small)) 
 graph export "$directorio/Figuras/informal_time.pdf", replace	
 
 

@@ -84,14 +84,16 @@ drop if missing(date)
 
 *Employees
 gen e_t = log(emp_t)
-gen e_50 = log(emp_size_1+emp_size_2_5+emp_size_6_50)
+gen e_1 = log(emp_size_1)
+gen e_50 = log(emp_size_2_5+emp_size_6_50)
 gen e_250 = log(emp_size_51_250)
 gen e_1000m = log(emp_size_251_500+emp_size_501_1000+emp_size_1000)
 
 
 *Employers
 gen p_t = log(pat_t)
-gen p_50 = log(pat_size_1+pat_size_2_5+pat_size_6_50) 
+gen p_1 = log(pat_size_1)
+gen p_50 = log(pat_size_2_5+pat_size_6_50) 
 gen p_250 = log(pat_size_51_250)
 gen p_1000m = log(pat_size_251_500+pat_size_501_1000+pat_size_1000)
 
@@ -143,7 +145,7 @@ forvalues j=4 8 to 16 {
 	replace Tb`j'x=0 if Tb`j'x==.
 	replace TbL`j'x=0 if TbL`j'x==.
 }
-
+	
 
 foreach var in insured urban unm inf p50 age1 age2  gender ////
 		yrschl industry1 industry2 industry3 industry4 industry5 industry6 industry7 ////
@@ -163,10 +165,18 @@ bys cvemun: egen tmax=max(TT*date)
 gen xxx=date-tmax	//temporal variable//
 replace xxx=-16 if xxx<-16
 replace xxx=. if xxx>50
-replace xxx=20 if xxx>20 & xxx!=.
+replace xxx=24 if xxx>24 & xxx!=.
 
+*Collapsed period of treatment
+gen SP_BC_col = .
+local k = -10
+forvalues i = -40(4)80 {
+	replace SP_BC_col = `k' if inrange(xxx, `i',`=`i'+3')
+	local k = `k' + 1
+}
+	
 gen date2=date*date
 gen date3=date2*date
 
-
+compress
 save  "Data Created\DiD_BC.dta", replace	//General Dataset saved//
