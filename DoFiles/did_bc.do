@@ -80,7 +80,7 @@ foreach var in p_t p_1 p_50 p_250 p_1000m e_t e_1 e_50 e_250 e_1000m {
 	twoway (scatter event_bc_`var'1 period, color(black) lcolor(gs10%50) msize(medium) connect(line)) /// 
 				(rcap event_bc_`var'2 event_bc_`var'3 period, color(navy%50)) /// 
 				(rcap event_bc_`var'4 event_bc_`var'5 period, color(navy)) ///
-				, legend(off) xline(-1) yline(0, lcolor(red)) xtitle("Period relative to treatment")
+				, legend(off) xline(-1) yline(0, lcolor(red)) xtitle("Period (year) relative to treatment")
 	graph export "$directorio/Figuras/did_event_bc_`var'.pdf", replace	
 }
 

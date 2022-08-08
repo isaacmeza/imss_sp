@@ -8,8 +8,8 @@ version 17.0
 * Author:	Isaac M
 * Machine:	Isaac M 											
 * Date of creation:	June. 10, 2022
-* Last date of modification: 
-* Modifications: 
+* Last date of modification: Aug. 04, 2022
+* Modifications: Added differential in wages from (t) to (t+1) as determinant of transition.
 * Files used:     
 		- 
 * Files created:  
@@ -32,6 +32,7 @@ format date %tq
 
 *Covariates
 gen log_ing = log(ing_x_hrs+1)
+gen casado = inlist(e_con,1,5) if !missing(e_con)
 
 *Informal 
 gen byte informal = (emp_ppal==1) if emp_ppal!=0 & !missing(emp_ppal)
@@ -58,11 +59,11 @@ by id_ : gen id_aux = sum(id_1)
 egen id = group(id_ id_aux)
 
 
-keep id date n_ent municipio class_trab informal noimss mean_lum median_lum sex eda anios_esc hrsocup log_ing t_tra scian fac
+keep id date n_ent municipio class_trab informal noimss mean_lum median_lum sex eda anios_esc hrsocup log_ing t_tra casado scian fac
 
-reshape wide class_trab informal noimss mean_lum median_lum sex eda anios_esc hrsocup log_ing t_tra scian municipio date fac, i(id) j(n_ent)
+reshape wide class_trab informal noimss mean_lum median_lum sex eda anios_esc hrsocup log_ing t_tra casado scian municipio date fac, i(id) j(n_ent)
 
-order id date* fac* municipio* class_trab* informal1 informal2 informal3 informal4 informal5 noimss* mean_lum* median_lum* sex* eda* anios_esc* hrsocup* log_ing* t_tra* scian* 
+order id date* fac* municipio* class_trab* informal1 informal2 informal3 informal4 informal5 noimss* mean_lum* median_lum* sex* eda* anios_esc* hrsocup* log_ing* t_tra* casado* scian* 
 
 
 *Imputation
@@ -111,6 +112,8 @@ use  "$directorio\_aux\transition_master.dta", clear
 gen formal2 = (informal2==0) if !missing(informal2)
 gen imss2 = (noimss2==0) if !missing(noimss2)
 gen median_lum_c = median_lum2 - median_lum1
+gen log_ing_c = log_ing2 - log_ing1
+
 
 *Probability stack plot
 tab class_trab1 class_trab2 [fw = fac1], row matrow(row) matcol(col) matcell(MT)
@@ -207,7 +210,7 @@ foreach var of varlist eda1 anios_esc1 hrsocup1 {
 *Center at the mean	
 qui putexcel set "$directorio\Tables\reg_results\meanvardeps.xlsx", sheet("meanvardeps") modify	
 local j = 2
-foreach var of varlist eda1 anios_esc1 hrsocup1 log_ing1 mean_lum1 median_lum_c {
+foreach var of varlist eda1 anios_esc1 hrsocup1 log_ing_c mean_lum1 median_lum_c {
 	qui su `var' if informal1==0
 	qui putexcel E`j'=`r(N)'	
 	qui su `var' [fw = fac1] if informal1==0
@@ -227,15 +230,15 @@ foreach var of varlist eda1 anios_esc1 hrsocup1 log_ing1 mean_lum1 median_lum_c 
 }
 
 forvalues i = 1/2 { 
-	matrix transition_det_informal`i' = J(7,3,.) 
-	matrix transition_det_formal`i' = J(7,3,.) 
-	matrix transition_det_noimss`i' = J(7,3,.) 
-	matrix transition_det_imss`i' = J(7,3,.) 
+	matrix transition_det_informal`i' = J(8,3,.) 
+	matrix transition_det_formal`i' = J(8,3,.) 
+	matrix transition_det_noimss`i' = J(8,3,.) 
+	matrix transition_det_imss`i' = J(8,3,.) 
 }
 
 eststo clear
 *For computational purposes since we are only interested in the point estimate we use
-eststo : reg informal2 ibn.date1 2.sex1 eda1_for anios_esc1_for hrsocup1_for log_ing1_for 2.t_tra1 median_lum_c_for [fw = fac1] if informal1==0, nocons vce(robust)
+eststo : reg informal2 ibn.date1 2.sex1 eda1_for anios_esc1_for hrsocup1_for log_ing_c_for 2.t_tra1 casado1 median_lum_c_for [fw = fac1] if informal1==0, nocons vce(robust)
 qui count if e(sample)==1
 local obs = `r(N)'
 estadd scalar obs = `obs'
@@ -243,7 +246,7 @@ estadd scalar obs = `obs'
 *reg informal2 0.informal1#ibn.date1 2.sex1#ibn.date1 ... [fw = fac1], nocons
 matrix transition_prob_time = e(b)'
 
-eststo : reg noimss2 ibn.date1 2.sex1 eda1_imss anios_esc1_imss hrsocup1_imss log_ing1_imss 2.t_tra1 median_lum_c_imss [fw = fac1] if noimss1==0, nocons vce(robust)
+eststo : reg noimss2 ibn.date1 2.sex1 eda1_imss anios_esc1_imss hrsocup1_imss log_ing_c_imss 2.t_tra1 casado1 median_lum_c_imss [fw = fac1] if noimss1==0, nocons vce(robust)
 qui count if e(sample)==1
 local obs = `r(N)'
 estadd scalar obs = `obs'
@@ -265,7 +268,7 @@ graph export "$directorio/Figuras/transition_prob_time_inf.pdf", replace
 
 
 
-eststo : reghdfe informal2 ibn.date1 2.sex1 eda1_for anios_esc1_for hrsocup1_for log_ing1_for 2.t_tra1 median_lum_c_for [fw = fac1] if informal1==0, nocons absorb(municipio1) vce(robust)
+eststo : reghdfe informal2 ibn.date1 2.sex1 eda1_for anios_esc1_for hrsocup1_for log_ing_c_for 2.t_tra1 casado1 median_lum_c_for [fw = fac1] if informal1==0, nocons absorb(municipio1) vce(robust)
 qui count if e(sample)==1
 local obs = `r(N)'
 estadd scalar obs = `obs'
@@ -276,14 +279,14 @@ foreach var of varlist sex1 t_tra1 {
 	matrix transition_det_informal1[`j',3] = _b[2.`var'] + invnormal(.975)*_se[2.`var'] 
 	local j = `j' + 1
 }
-foreach var of varlist eda1_for anios_esc1_for hrsocup1_for log_ing1_for  median_lum_c_for {
+foreach var of varlist casado1 eda1_for anios_esc1_for hrsocup1_for log_ing_c_for  median_lum_c_for {
 	matrix transition_det_informal1[`j',1] = _b[`var']
 	matrix transition_det_informal1[`j',2] = _b[`var'] - invnormal(.975)*_se[`var']
 	matrix transition_det_informal1[`j',3] = _b[`var'] + invnormal(.975)*_se[`var'] 
 	local j = `j' + 1
 }
 
-eststo : reghdfe noimss2 ibn.date1 2.sex1 eda1_imss anios_esc1_imss hrsocup1_imss log_ing1_imss 2.t_tra1 median_lum_c_imss [fw = fac1] if noimss1==0, nocons absorb(municipio1) vce(robust)
+eststo : reghdfe noimss2 ibn.date1 2.sex1 eda1_imss anios_esc1_imss hrsocup1_imss log_ing_c_imss 2.t_tra1 casado1 median_lum_c_imss [fw = fac1] if noimss1==0, nocons absorb(municipio1) vce(robust)
 qui count if e(sample)==1
 local obs = `r(N)'
 estadd scalar obs = `obs'
@@ -294,14 +297,14 @@ foreach var of varlist sex1 t_tra1 {
 	matrix transition_det_noimss1[`j',3] = _b[2.`var'] + invnormal(.975)*_se[2.`var'] 
 	local j = `j' + 1
 }
-foreach var of varlist eda1_imss anios_esc1_imss hrsocup1_imss log_ing1_imss  median_lum_c_imss {
+foreach var of varlist casado1 eda1_imss anios_esc1_imss hrsocup1_imss log_ing_c_imss  median_lum_c_imss {
 	matrix transition_det_noimss1[`j',1] = _b[`var']
 	matrix transition_det_noimss1[`j',2] = _b[`var'] - invnormal(.975)*_se[`var']
 	matrix transition_det_noimss1[`j',3] = _b[`var'] + invnormal(.975)*_se[`var'] 
 	local j = `j' + 1
 }
 
-eststo : reghdfe informal2 ibn.date1 2.sex1 eda1_for anios_esc1_for hrsocup1_for log_ing1_for 2.t_tra1 median_lum_c_for [fw = fac1] if informal1==0, absorb(scian1 municipio1) vce(robust)
+eststo : reghdfe informal2 ibn.date1 2.sex1 eda1_for anios_esc1_for hrsocup1_for log_ing_c_for 2.t_tra1 casado1 median_lum_c_for [fw = fac1] if informal1==0, absorb(scian1 municipio1) vce(robust)
 qui count if e(sample)==1
 local obs = `r(N)'
 estadd scalar obs = `obs'
@@ -312,13 +315,13 @@ foreach var of varlist sex1 t_tra1 {
 	matrix transition_det_informal2[`j',3] = _b[2.`var'] + invnormal(.975)*_se[2.`var'] 
 	local j = `j' + 1
 }
-foreach var of varlist eda1_for anios_esc1_for hrsocup1_for log_ing1_for  median_lum_c_for {
+foreach var of varlist casado1 eda1_for anios_esc1_for hrsocup1_for log_ing_c_for  median_lum_c_for {
 	matrix transition_det_informal2[`j',1] = _b[`var']
 	matrix transition_det_informal2[`j',2] = _b[`var'] - invnormal(.975)*_se[`var']
 	matrix transition_det_informal2[`j',3] = _b[`var'] + invnormal(.975)*_se[`var'] 
 	local j = `j' + 1
 }
-eststo : reghdfe noimss2 ibn.date1 2.sex1 eda1_imss anios_esc1_imss hrsocup1_imss log_ing1_imss 2.t_tra1 median_lum_c_imss [fw = fac1] if noimss1==0, absorb(scian1 municipio1) vce(robust)
+eststo : reghdfe noimss2 ibn.date1 2.sex1 eda1_imss anios_esc1_imss hrsocup1_imss log_ing_c_imss 2.t_tra1 casado1 median_lum_c_imss [fw = fac1] if noimss1==0, absorb(scian1 municipio1) vce(robust)
 qui count if e(sample)==1
 local obs = `r(N)'
 estadd scalar obs = `obs'
@@ -329,14 +332,14 @@ foreach var of varlist sex1 t_tra1 {
 	matrix transition_det_noimss2[`j',3] = _b[2.`var'] + invnormal(.975)*_se[2.`var'] 
 	local j = `j' + 1
 }
-foreach var of varlist eda1_imss anios_esc1_imss hrsocup1_imss log_ing1_imss  median_lum_c_imss {
+foreach var of varlist casado1 eda1_imss anios_esc1_imss hrsocup1_imss log_ing_c_imss  median_lum_c_imss {
 	matrix transition_det_noimss2[`j',1] = _b[`var']
 	matrix transition_det_noimss2[`j',2] = _b[`var'] - invnormal(.975)*_se[`var']
 	matrix transition_det_noimss2[`j',3] = _b[`var'] + invnormal(.975)*_se[`var'] 
 	local j = `j' + 1
 }
 
-esttab using "$directorio/Tables/reg_results/transition_prob_reg_inf.csv", se r2 ${star} b(a2)  replace keep(2.sex1 eda1* anios_esc1* hrsocup1* log_ing1* 2.t_tra1 median_lum_c*) scalars("obs obs")
+esttab using "$directorio/Tables/reg_results/transition_prob_reg_inf.csv", se r2 ${star} b(a2)  replace keep(2.sex1 eda1* anios_esc1* hrsocup1* log_ing_c* 2.t_tra1 casado1 median_lum_c*) scalars("obs obs")
 
 
 *-------------------------------------------------------------------------------
@@ -346,7 +349,7 @@ esttab using "$directorio/Tables/reg_results/transition_prob_reg_inf.csv", se r2
 *Center at the mean	
 qui putexcel set "$directorio\Tables\reg_results\meanvardeps.xlsx", sheet("meanvardeps") modify	
 local j = 10
-foreach var of varlist eda1 anios_esc1 hrsocup1 log_ing1 mean_lum1 median_lum_c {
+foreach var of varlist eda1 anios_esc1 hrsocup1 log_ing_c mean_lum1 median_lum_c {
 	qui su `var' if informal1==1
 	qui putexcel E`j'=`r(N)'	
 	qui su `var' [fw = fac1] if informal1==1
@@ -367,7 +370,7 @@ foreach var of varlist eda1 anios_esc1 hrsocup1 log_ing1 mean_lum1 median_lum_c 
 
 eststo clear
 *For computational purposes since we are only interested in the point estimate we use
-eststo : reg formal2 ibn.date1 2.sex1 eda1_inf anios_esc1_inf hrsocup1_inf log_ing1_inf 2.t_tra1 median_lum_c_inf [fw = fac1] if informal1==1, nocons vce(robust)
+eststo : reg formal2 ibn.date1 2.sex1 eda1_inf anios_esc1_inf hrsocup1_inf log_ing_c_inf 2.t_tra1 casado1 median_lum_c_inf [fw = fac1] if informal1==1, nocons vce(robust)
 qui count if e(sample)==1
 local obs = `r(N)'
 estadd scalar obs = `obs'
@@ -375,7 +378,7 @@ estadd scalar obs = `obs'
 *reg informal2 1.informal1#ibn.date1 2.sex1#ibn.date1 ... [fw = fac1], nocons
 matrix transition_prob_time = e(b)'
 
-eststo : reg imss2 ibn.date1 2.sex1 eda1_noimss anios_esc1_noimss hrsocup1_noimss log_ing1_noimss 2.t_tra1 median_lum_c_noimss [fw = fac1] if noimss1==1, nocons vce(robust)
+eststo : reg imss2 ibn.date1 2.sex1 eda1_noimss anios_esc1_noimss hrsocup1_noimss log_ing_c_noimss 2.t_tra1 casado1 median_lum_c_noimss [fw = fac1] if noimss1==1, nocons vce(robust)
 qui count if e(sample)==1
 local obs = `r(N)'
 estadd scalar obs = `obs'
@@ -398,7 +401,7 @@ graph export "$directorio/Figuras/transition_prob_time_for.pdf", replace
 
 
 
-eststo : reghdfe formal2 ibn.date1 2.sex1 eda1_inf anios_esc1_inf hrsocup1_inf log_ing1_inf 2.t_tra1 median_lum_c_inf [fw = fac1] if informal1==1, nocons absorb(municipio1) vce(robust)
+eststo : reghdfe formal2 ibn.date1 2.sex1 eda1_inf anios_esc1_inf hrsocup1_inf log_ing_c_inf 2.t_tra1 casado1 median_lum_c_inf [fw = fac1] if informal1==1, nocons absorb(municipio1) vce(robust)
 qui count if e(sample)==1
 local obs = `r(N)'
 estadd scalar obs = `obs'
@@ -409,14 +412,14 @@ foreach var of varlist sex1 t_tra1 {
 	matrix transition_det_formal1[`j',3] = _b[2.`var'] + invnormal(.975)*_se[2.`var'] 
 	local j = `j' + 1
 }
-foreach var of varlist eda1_inf anios_esc1_inf hrsocup1_inf log_ing1_inf  median_lum_c_inf {
+foreach var of varlist casado1 eda1_inf anios_esc1_inf hrsocup1_inf log_ing_c_inf  median_lum_c_inf  {
 	matrix transition_det_formal1[`j',1] = _b[`var']
 	matrix transition_det_formal1[`j',2] = _b[`var'] - invnormal(.975)*_se[`var']
 	matrix transition_det_formal1[`j',3] = _b[`var'] + invnormal(.975)*_se[`var'] 
 	local j = `j' + 1
 }
 
-eststo : reghdfe imss2 ibn.date1 2.sex1 eda1_noimss anios_esc1_noimss hrsocup1_noimss log_ing1_noimss 2.t_tra1 median_lum_c_noimss [fw = fac1] if noimss1==1, nocons absorb(municipio1) vce(robust)
+eststo : reghdfe imss2 ibn.date1 2.sex1 eda1_noimss anios_esc1_noimss hrsocup1_noimss log_ing_c_noimss 2.t_tra1 casado1 median_lum_c_noimss [fw = fac1] if noimss1==1, nocons absorb(municipio1) vce(robust)
 qui count if e(sample)==1
 local obs = `r(N)'
 estadd scalar obs = `obs'
@@ -427,14 +430,14 @@ foreach var of varlist sex1 t_tra1 {
 	matrix transition_det_imss1[`j',3] = _b[2.`var'] + invnormal(.975)*_se[2.`var'] 
 	local j = `j' + 1
 }
-foreach var of varlist eda1_noimss anios_esc1_noimss hrsocup1_noimss log_ing1_noimss  median_lum_c_noimss {
+foreach var of varlist casado1 eda1_noimss anios_esc1_noimss hrsocup1_noimss log_ing_c_noimss  median_lum_c_noimss {
 	matrix transition_det_imss1[`j',1] = _b[`var']
 	matrix transition_det_imss1[`j',2] = _b[`var'] - invnormal(.975)*_se[`var']
 	matrix transition_det_imss1[`j',3] = _b[`var'] + invnormal(.975)*_se[`var'] 
 	local j = `j' + 1
 }
 
-eststo : reghdfe formal2 ibn.date1 2.sex1 eda1_inf anios_esc1_inf hrsocup1_inf log_ing1_inf 2.t_tra1 median_lum_c_inf [fw = fac1] if informal1==1, absorb(scian1 municipio1) vce(robust)
+eststo : reghdfe formal2 ibn.date1 2.sex1 eda1_inf anios_esc1_inf hrsocup1_inf log_ing_c_inf 2.t_tra1 casado1 median_lum_c_inf [fw = fac1] if informal1==1, absorb(scian1 municipio1) vce(robust)
 qui count if e(sample)==1
 local obs = `r(N)'
 estadd scalar obs = `obs'
@@ -445,14 +448,14 @@ foreach var of varlist sex1 t_tra1 {
 	matrix transition_det_formal2[`j',3] = _b[2.`var'] + invnormal(.975)*_se[2.`var'] 
 	local j = `j' + 1
 }
-foreach var of varlist eda1_inf anios_esc1_inf hrsocup1_inf log_ing1_inf median_lum_c_inf {
+foreach var of varlist casado1 eda1_inf anios_esc1_inf hrsocup1_inf log_ing_c_inf median_lum_c_inf {
 	matrix transition_det_formal2[`j',1] = _b[`var']
 	matrix transition_det_formal2[`j',2] = _b[`var'] - invnormal(.975)*_se[`var']
 	matrix transition_det_formal2[`j',3] = _b[`var'] + invnormal(.975)*_se[`var'] 
 	local j = `j' + 1
 }
 
-eststo : reghdfe imss2 ibn.date1 2.sex1 eda1_noimss anios_esc1_noimss hrsocup1_noimss log_ing1_noimss 2.t_tra1 median_lum_c_noimss [fw = fac1] if noimss1==1, absorb(scian1 municipio1) vce(robust)
+eststo : reghdfe imss2 ibn.date1 2.sex1 eda1_noimss anios_esc1_noimss hrsocup1_noimss log_ing_c_noimss 2.t_tra1 casado1 median_lum_c_noimss [fw = fac1] if noimss1==1, absorb(scian1 municipio1) vce(robust)
 qui count if e(sample)==1
 local obs = `r(N)'
 estadd scalar obs = `obs'
@@ -463,21 +466,21 @@ foreach var of varlist sex1 t_tra1 {
 	matrix transition_det_imss2[`j',3] = _b[2.`var'] + invnormal(.975)*_se[2.`var'] 
 	local j = `j' + 1
 }
-foreach var of varlist eda1_noimss anios_esc1_noimss hrsocup1_noimss log_ing1_noimss  median_lum_c_noimss {
+foreach var of varlist casado1 eda1_noimss anios_esc1_noimss hrsocup1_noimss log_ing_c_noimss  median_lum_c_noimss {
 	matrix transition_det_imss2[`j',1] = _b[`var']
 	matrix transition_det_imss2[`j',2] = _b[`var'] - invnormal(.975)*_se[`var']
 	matrix transition_det_imss2[`j',3] = _b[`var'] + invnormal(.975)*_se[`var'] 
 	local j = `j' + 1
 }
 
-esttab using "$directorio/Tables/reg_results/transition_prob_reg_for.csv", se r2 ${star} b(a2)  replace keep(2.sex1 eda1* anios_esc1* hrsocup1* log_ing1* 2.t_tra1 median_lum_c*) scalars("obs obs")
+esttab using "$directorio/Tables/reg_results/transition_prob_reg_for.csv", se r2 ${star} b(a2)  replace keep(2.sex1 eda1* anios_esc1* hrsocup1* log_ing_c* 2.t_tra1 casado1 median_lum_c*) scalars("obs obs")
 
 
 ***********       CoefPlot		***************
 ***********************************************
 foreach var in transition_det_formal transition_det_informal transition_det_imss transition_det_noimss {
 	forvalues i = 1/2 {
-		mat rownames `var'`i' =  "Woman" "Log(Age)" "Log(Schooling)" "Log(Weekly hours)" "Log(hourly wage)" "Two jobs" "{&Delta} Median luminosity" 
+		mat rownames `var'`i' =  "Woman" "Two jobs" "Married" "Log(Age)" "Log(Schooling)" "Log(Weekly hours)" "{&Delta} Log(hourly wage)"  "{&Delta} Median luminosity" 
 	}
 	coefplot (matrix(`var'1[,1]), offset(0.06) ci((`var'1[,2] `var'1[,3])) msize(large) ciopts(lcolor(gs4))) ///
 	(matrix(`var'2[,1]), offset(-0.06) ci((`var'2[,2] `var'2[,3])) msize(large) ciopts(lcolor(gs4))) , ///
@@ -499,22 +502,22 @@ gen for_inf = (informal1==0 & informal2==1) if !missing(informal1) & !missing(in
 gen for_for = (informal1==0 & informal2==0) if !missing(informal1) & !missing(informal2)
 
 gen noimss_noimss = (noimss1==1 & noimss2==1) if !missing(noimss1) & !missing(noimss2) 
-gen imss_noimss = (noimss1==1 & noimss2==0) if !missing(noimss1) & !missing(noimss2)
-gen noimss_imss = (noimss1==0 & noimss2==1) if !missing(noimss1) & !missing(noimss2)
+gen noimss_imss = (noimss1==1 & noimss2==0) if !missing(noimss1) & !missing(noimss2)
+gen imss_noimss = (noimss1==0 & noimss2==1) if !missing(noimss1) & !missing(noimss2)
 gen imss_imss = (noimss1==0 & noimss2==0) if !missing(noimss1) & !missing(noimss2)
 
 
 
  
 eststo clear
-eststo : reghdfe inf_for 2.sex1 eda1 anios_esc1 hrsocup1 log_ing1 2.t_tra1 median_lum_c i.scian1 ibn.date1 [fw = fac1], noabsorb vce(robust)
+eststo : reghdfe inf_for 2.sex1 eda1 anios_esc1 hrsocup1 log_ing_c 2.t_tra1 casado1 median_lum_c i.scian1 ibn.date1 [fw = fac1], noabsorb vce(robust)
 qui count if e(sample)==1
 local obs = `r(N)'
 su inf_for if e(sample)==1
 estadd scalar DepVarMean = `r(mean)'
 estadd scalar obs = `obs'
 
-eststo : reghdfe inf_for 2.sex1 eda1 anios_esc1 hrsocup1 log_ing1 2.t_tra1 median_lum_c i.scian1 ibn.date1 [fw = fac1], absorb(municipio1) vce(robust)
+eststo : reghdfe inf_for 2.sex1 eda1 anios_esc1 hrsocup1 log_ing_c 2.t_tra1 casado1  median_lum_c i.scian1 ibn.date1 [fw = fac1], absorb(municipio1) vce(robust)
 qui count if e(sample)==1
 local obs = `r(N)'
 su inf_for if e(sample)==1
@@ -522,14 +525,14 @@ estadd scalar DepVarMean = `r(mean)'
 estadd scalar obs = `obs'
 
 
-eststo : reghdfe noimss_imss 2.sex1 eda1 anios_esc1 hrsocup1 log_ing1 2.t_tra1 median_lum_c i.scian1 ibn.date1 [fw = fac1], noabsorb vce(robust)
+eststo : reghdfe noimss_imss 2.sex1 eda1 anios_esc1 hrsocup1 log_ing_c 2.t_tra1 casado1 median_lum_c i.scian1 ibn.date1 [fw = fac1], noabsorb vce(robust)
 qui count if e(sample)==1
 local obs = `r(N)'
 su noimss_imss if e(sample)==1
 estadd scalar DepVarMean = `r(mean)'
 estadd scalar obs = `obs'
 
-eststo : reghdfe noimss_imss 2.sex1 eda1 anios_esc1 hrsocup1 log_ing1 2.t_tra1 median_lum_c i.scian1 ibn.date1 [fw = fac1], absorb(municipio1) vce(robust)
+eststo : reghdfe noimss_imss 2.sex1 eda1 anios_esc1 hrsocup1 log_ing_c 2.t_tra1 casado1 median_lum_c i.scian1 ibn.date1 [fw = fac1], absorb(municipio1) vce(robust)
 qui count if e(sample)==1
 local obs = `r(N)'
 su noimss_imss if e(sample)==1
@@ -538,28 +541,28 @@ estadd scalar obs = `obs'
 
 ********************************************************************************
 
-eststo : reghdfe for_inf 2.sex1 eda1 anios_esc1 hrsocup1 log_ing1 2.t_tra1 median_lum_c i.scian1 ibn.date1 [fw = fac1], noabsorb vce(robust)
+eststo : reghdfe for_inf 2.sex1 eda1 anios_esc1 hrsocup1 log_ing_c 2.t_tra1 casado1 median_lum_c i.scian1 ibn.date1 [fw = fac1], noabsorb vce(robust)
 qui count if e(sample)==1
 local obs = `r(N)'
 su for_inf if e(sample)==1
 estadd scalar DepVarMean = `r(mean)'
 estadd scalar obs = `obs'
 
-eststo : reghdfe for_inf 2.sex1 eda1 anios_esc1 hrsocup1 log_ing1 2.t_tra1 median_lum_c i.scian1 ibn.date1 [fw = fac1], absorb(municipio1) vce(robust)
+eststo : reghdfe for_inf 2.sex1 eda1 anios_esc1 hrsocup1 log_ing_c 2.t_tra1 casado1 median_lum_c i.scian1 ibn.date1 [fw = fac1], absorb(municipio1) vce(robust)
 qui count if e(sample)==1
 local obs = `r(N)'
 su for_inf if e(sample)==1
 estadd scalar DepVarMean = `r(mean)'
 estadd scalar obs = `obs'
 
-eststo : reghdfe imss_noimss 2.sex1 eda1 anios_esc1 hrsocup1 log_ing1 2.t_tra1 median_lum_c i.scian1 ibn.date1 [fw = fac1], noabsorb vce(robust)
+eststo : reghdfe imss_noimss 2.sex1 eda1 anios_esc1 hrsocup1 log_ing_c 2.t_tra1 casado1 median_lum_c i.scian1 ibn.date1 [fw = fac1], noabsorb vce(robust)
 qui count if e(sample)==1
 local obs = `r(N)'
 su imss_noimss if e(sample)==1
 estadd scalar DepVarMean = `r(mean)'
 estadd scalar obs = `obs'
 
-eststo : reghdfe imss_noimss 2.sex1 eda1 anios_esc1 hrsocup1 log_ing1 2.t_tra1 median_lum_c i.scian1 ibn.date1 [fw = fac1], absorb(municipio1) vce(robust)
+eststo : reghdfe imss_noimss 2.sex1 eda1 anios_esc1 hrsocup1 log_ing_c 2.t_tra1 casado1 median_lum_c i.scian1 ibn.date1 [fw = fac1], absorb(municipio1) vce(robust)
 qui count if e(sample)==1
 local obs = `r(N)'
 su imss_noimss if e(sample)==1
@@ -567,9 +570,65 @@ estadd scalar DepVarMean = `r(mean)'
 estadd scalar obs = `obs'
 
 
-esttab using "$directorio/Tables/reg_results/characteristics_switchers.csv", se r2 ${star} b(a2)  replace keep(2.sex1 eda1 anios_esc1 hrsocup1 log_ing1 2.t_tra1 median_lum_c) scalars("DepVarMean DepVarMean" "obs obs")
+esttab using "$directorio/Tables/reg_results/characteristics_switchers.csv", se r2 ${star} b(a2)  replace keep(2.sex1 eda1 anios_esc1 hrsocup1 log_ing_c 2.t_tra1 casado1 median_lum_c) scalars("DepVarMean DepVarMean" "obs obs")
 
 
-keep inf_for for_inf imss_noimss noimss_imss fac1 sex1 eda1 anios_esc1 hrsocup1 log_ing1 t_tra1 median_lum_c scian1 date1 municipio1
+
+***********************************************
+**** 	Consequences of switchers		  *****
+***********************************************
+
+eststo clear
+eststo : reghdfe log_ing_c inf_for for_inf inf_inf 2.sex1 eda1 anios_esc1 hrsocup1 2.t_tra1 casado1 median_lum_c i.scian1 ibn.date1 [fw = fac1], noabsorb vce(robust)
+qui count if e(sample)==1
+local obs = `r(N)'
+su log_ing_c if e(sample)==1
+estadd scalar DepVarMean = `r(mean)'
+estadd scalar obs = `obs'
+
+eststo : reghdfe log_ing_c inf_for for_inf inf_inf 2.sex1 eda1 anios_esc1 hrsocup1 casado1 median_lum_c i.scian1 ibn.date1 [fw = fac1], absorb(municipio1) vce(robust)
+qui count if e(sample)==1
+local obs = `r(N)'
+su log_ing_c if e(sample)==1
+estadd scalar DepVarMean = `r(mean)'
+estadd scalar obs = `obs'
+
+eststo : reghdfe log_ing_c inf_for for_inf inf_inf 2.sex1 eda1 anios_esc1 hrsocup1 2.t_tra1 casado1 median_lum_c i.scian1 ibn.date1 [fw = fac1], absorb(id) vce(robust)
+qui count if e(sample)==1
+local obs = `r(N)'
+su log_ing_c if e(sample)==1
+estadd scalar DepVarMean = `r(mean)'
+estadd scalar obs = `obs'
+
+
+
+
+eststo : reghdfe log_ing_c noimss_imss imss_noimss noimss_noimss 2.sex1 eda1 anios_esc1 hrsocup1 2.t_tra1 casado1 median_lum_c i.scian1 ibn.date1 [fw = fac1], noabsorb vce(robust)
+qui count if e(sample)==1
+local obs = `r(N)'
+su log_ing_c if e(sample)==1
+estadd scalar DepVarMean = `r(mean)'
+estadd scalar obs = `obs'
+
+eststo : reghdfe log_ing_c noimss_imss imss_noimss noimss_noimss 2.sex1 eda1 anios_esc1 hrsocup1 casado1 median_lum_c i.scian1 ibn.date1 [fw = fac1], absorb(municipio1) vce(robust)
+qui count if e(sample)==1
+local obs = `r(N)'
+su log_ing_c if e(sample)==1
+estadd scalar DepVarMean = `r(mean)'
+estadd scalar obs = `obs'
+
+eststo : reghdfe log_ing_c noimss_imss imss_noimss noimss_noimss 2.sex1 eda1 anios_esc1 hrsocup1 2.t_tra1 casado1 median_lum_c i.scian1 ibn.date1 [fw = fac1], absorb(id) vce(robust)
+qui count if e(sample)==1
+local obs = `r(N)'
+su log_ing_c if e(sample)==1
+estadd scalar DepVarMean = `r(mean)'
+estadd scalar obs = `obs'
+
+
+esttab using "$directorio/Tables/reg_results/consequences_switchers.csv", se r2 ${star} b(a2)  replace keep(inf_for for_inf inf_inf noimss_imss imss_noimss noimss_noimss 2.sex1 eda1 anios_esc1 hrsocup1 2.t_tra1 casado1 median_lum_c) scalars("DepVarMean DepVarMean" "obs obs")
+
+*-------------------------------------------------------------------------------
+
+keep inf_for for_inf imss_noimss noimss_imss fac1 sex1 eda1 anios_esc1 hrsocup1 log_ing1 log_ing_c t_tra1 median_lum_c scian1 date1 municipio1
 drop if missing(inf_for) & missing(for_inf) & missing(imss_noimss) & missing(noimss_imss)
 export delimited using "$directorio\_aux\switchers.csv", nolabel replace

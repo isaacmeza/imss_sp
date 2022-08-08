@@ -33,6 +33,10 @@ tab ent, gen(dummy_ent)
 drop dummy_ent32
 tab government, gen(dummy_gov)
 
+gen date1 = date
+gen date2 = date*date
+gen date3 = date2*date
+
 gen median_lum2 = median_lum*median_lum
 gen median_lum3 = median_lum2*median_lum
 ********************************************************************************
@@ -43,108 +47,77 @@ vl create instruments = (dummy_gov1 dummy_gov2)
 
 
 eststo clear
-foreach var in p_t_ e_t_ lg1_ta_femenino lg1_ta_masculino /// imss consolidated
-		 lg1_trab_eventual lg1_trab_perm lg1_trab_campo lg1_trab_urb lg1_ta_sal /// asg
-		 lg1_masa_sal_ta {
-		
+foreach var in p_t_ e_t_  /// imss consolidated
+		 lg1_masa_sal_ta /// asg
+		  {
 	*Pre-time trends
 	gen trend_`var' = `var' - L.`var'
-	
-	eststo : reg trend_`var' $instruments_c $instruments lgpop median_lum* sexo salario_promedio x_t_* if inrange(date,yq(2000,1),yq(2004,4)), r
+
+	eststo : reg trend_`var' $instruments_c $instruments lgpop median_lum* sexo  x_t_* i.date if inrange(date,yq(2000,1),yq(2003,4)) & bal_48==1, vce(cluster cvemun)
 	cap test $instruments_c $instruments 
 	estadd scalar Fstat = `e(F)'
 	estadd scalar pval = `r(p)'
 	
-	eststo : reghdfe trend_`var' $instruments_c $instruments lgpop median_lum* sexo salario_promedio x_t_* if inrange(date,yq(2000,1),yq(2004,4)), absorb(cvemun) vce(robust) 
+	eststo : reghdfe trend_`var' $instruments_c $instruments lgpop median_lum* sexo  x_t_* i.date if inrange(date,yq(2000,1),yq(2003,4)) & bal_48==1, absorb(cvemun) vce(cluster cvemun) 
 	cap test $instruments_c $instruments 
 	estadd scalar Fstat = `e(F)'
 	estadd scalar pval = `r(p)'	
 	
-	qui cvlasso trend_`var' $instruments $instruments_c if inrange(date,yq(2000,1),yq(2004,4)), fe
-	qui lasso2 trend_`var' $instruments $instruments_c if inrange(date,yq(2000,1),yq(2004,4)), l(`lopt') fe 
-	eststo : reghdfe trend_`var' `e(selected)' lgpop median_lum* sexo salario_promedio if inrange(date,yq(2000,1),yq(2004,4)), absorb(cvemun) vce(robust)
+	qui cvlasso trend_`var' $instruments $instruments_c if inrange(date,yq(2000,1),yq(2003,4)) & bal_48==1, fe
+	qui lasso2 trend_`var' $instruments $instruments_c if inrange(date,yq(2000,1),yq(2003,4)) & bal_48==1, l(`lopt') fe 
+	eststo : reghdfe trend_`var' `e(selected)' lgpop median_lum* sexo x_t_* i.date if inrange(date,yq(2000,1),yq(2003,4)) & bal_48==1, absorb(cvemun) vce(cluster cvemun)
 	cap test `e(selected)' 
 	estadd scalar Fstat = `e(F)'
 	cap estadd scalar pval = `r(p)'	
 }
 	
-esttab using "$directorio/Tables/reg_results/pretime_trends_instrument_1q.csv", se r2 ${star} b(a2)  replace keep($instruments_c $instruments lgpop median_lum* sexo salario_promedio) scalars("Fstat Fstat" "pval pval")	
+esttab using "$directorio/Tables/reg_results/pretime_trends_instrument_1q.csv", se r2 ${star} b(a2)  replace keep($instruments_c $instruments lgpop median_lum* sexo ) scalars("Fstat Fstat" "pval pval")	
 	
 	
 eststo clear
-foreach var in p_t_ e_t_ lg1_ta_femenino lg1_ta_masculino /// imss consolidated
-		 lg1_trab_eventual lg1_trab_perm lg1_trab_campo lg1_trab_urb lg1_ta_sal /// asg
-		 lg1_masa_sal_ta {	
+foreach var in  p_t_ e_t_  /// imss consolidated
+		 lg1_masa_sal_ta /// asg
+		  {
 	*Pre-time trends	
 	gen trend4_`var' = `var' - L4.`var'
 		
-	eststo : reg trend4_`var' $instruments_c $instruments lgpop median_lum* sexo salario_promedio x_t_* if inrange(date,yq(2000,1),yq(2004,4)), r
+	eststo : reg trend4_`var' $instruments_c $instruments lgpop median_lum* sexo  x_t_* i.date if inrange(date,yq(2000,1),yq(2003,4)) & bal_48==1, vce(cluster cvemun)
 	cap test $instruments_c $instruments 
 	estadd scalar Fstat = `e(F)'
 	estadd scalar pval = `r(p)'
 	
-	eststo : reghdfe trend4_`var' $instruments_c $instruments lgpop median_lum* sexo salario_promedio x_t_* if inrange(date,yq(2000,1),yq(2004,4)), absorb(cvemun) vce(robust) 
+	eststo : reghdfe trend4_`var' $instruments_c $instruments lgpop median_lum* sexo  x_t_* i.date if inrange(date,yq(2000,1),yq(2003,4)) & bal_48==1, absorb(cvemun) vce(cluster cvemun)
 	cap test $instruments_c $instruments 
 	estadd scalar Fstat = `e(F)'
 	estadd scalar pval = `r(p)'
 	
-	qui cvlasso trend4_`var' $instruments $instruments_c if inrange(date,yq(2000,1),yq(2004,4)), fe
-	qui lasso2 trend4_`var' $instruments $instruments_c if inrange(date,yq(2000,1),yq(2004,4)), l(`lopt') fe 
-	eststo : reghdfe trend4_`var' `e(selected)' lgpop median_lum* sexo salario_promedio if inrange(date,yq(2000,1),yq(2004,4)), absorb(cvemun) vce(robust)
+	qui cvlasso trend4_`var' $instruments $instruments_c if inrange(date,yq(2000,1),yq(2003,4)) & bal_48==1, fe
+	qui lasso2 trend4_`var' $instruments $instruments_c if inrange(date,yq(2000,1),yq(2003,4)) & bal_48==1, l(`lopt') fe 
+	eststo : reghdfe trend4_`var' `e(selected)' lgpop median_lum* sexo x_t_* i.date if inrange(date,yq(2000,1),yq(2003,4)) & bal_48==1, absorb(cvemun) vce(cluster cvemun)
 	cap test `e(selected)' 
 	estadd scalar Fstat = `e(F)'	
 	cap estadd scalar pval = `r(p)'
 }
 	
-esttab using "$directorio/Tables/reg_results/pretime_trends_instrument_4q.csv", se r2 ${star} b(a2)  replace keep($instruments_c $instruments lgpop median_lum* sexo salario_promedio) scalars("Fstat Fstat" "pval pval")	
+esttab using "$directorio/Tables/reg_results/pretime_trends_instrument_4q.csv", se r2 ${star} b(a2)  replace keep($instruments_c $instruments lgpop median_lum* sexo ) scalars("Fstat Fstat" "pval pval")	
 
-
-eststo clear
-foreach var in p_t_ e_t_ lg1_ta_femenino lg1_ta_masculino /// imss consolidated
-		 lg1_trab_eventual lg1_trab_perm lg1_trab_campo lg1_trab_urb lg1_ta_sal /// asg
-		 lg1_masa_sal_ta {	
-	*Pre-time trends	
-	gen trend16_`var' = `var' - L16.`var'
-		
-	eststo : reg trend16_`var' $instruments_c $instruments lgpop median_lum* sexo salario_promedio x_t_* if inrange(date,yq(2000,1),yq(2004,4)), r
-	cap test $instruments_c $instruments 
-	estadd scalar Fstat = `e(F)'
-	estadd scalar pval = `r(p)'
-	
-	eststo : reghdfe trend16_`var' $instruments_c $instruments lgpop median_lum* sexo salario_promedio x_t_* if inrange(date,yq(2000,1),yq(2004,4)), absorb(cvemun) vce(robust) 
-	cap test $instruments_c $instruments 
-	estadd scalar Fstat = `e(F)'
-	estadd scalar pval = `r(p)'
-	
-	qui cvlasso trend4_`var' $instruments $instruments_c if inrange(date,yq(2000,1),yq(2004,4)), fe
-	qui lasso2 trend4_`var' $instruments $instruments_c if inrange(date,yq(2000,1),yq(2004,4)), l(`lopt') fe 
-	eststo : reghdfe trend16_`var' `e(selected)' lgpop median_lum* sexo salario_promedio if inrange(date,yq(2000,1),yq(2004,4)), absorb(cvemun) vce(robust)
-	cap test `e(selected)' 
-	estadd scalar Fstat = `e(F)'
-	cap estadd scalar pval = `r(p)'	
-}
-	
-esttab using "$directorio/Tables/reg_results/pretime_trends_instrument_16q.csv", se r2 ${star} b(a2)  replace keep($instruments_c $instruments lgpop median_lum* sexo salario_promedio ) scalars("Fstat Fstat" "pval pval")			
 	  
 
 *Panel IV
 
 eststo clear
 foreach var of varlist p_t_ p_1_ p_50_ p_250_ p_1000m_ e_t_ e_1_ e_50_ e_250_ e_1000m_ /// B-C
-		 lg1_ta_femenino lg1_ta_masculino /// imss consolidated
-		 lg1_trab_eventual lg1_trab_perm lg1_trab_campo lg1_trab_urb lg1_ta_sal /// asg
-		 lg1_masa_sal_ta* lg1_masa_sal_te lg1_masa_sal_tp lg1_masa_sal_tc lg1_masa_sal_tu ///
-		 lg1_voluntarios_masculino lg1_voluntarios_femenino lg1_voluntarios {
-
-	eststo : xtivreg `var' lgpop median_lum* sexo salario_promedio  x_t_* (log_ind = $instruments_c $instruments) if inrange(date,yq(2005,1),yq(2008,4)), fe vce(cluster cvemun) 
+		 lg1_masa_sal_ta* /// asg
+		  {
+	eststo : xi : xtivreg2 `var' lgpop median_lum* sexo  x_t_* i.date1 (log_ind = $instruments_c $instruments) [aw=pob2000] if inrange(date,yq(2004,1),yq(2009,4)) & bal_48_imss==1, fe cluster(cvemun) 
 	qui levelsof cvemun if e(sample)==1 
 	local num_mun = `r(r)'
 	su `var' if (e(sample)==1)
 	estadd scalar DepVarMean = `r(mean)'
-	estadd scalar num_mun = `num_mun'	
+	estadd scalar num_mun = `num_mun'		
 }
 
-esttab using "$directorio/Tables/reg_results/paneliv_sp.csv", se r2 ${star} b(a2)  replace keep(log_ind lgpop median_lum* sexo salario_promedio) scalars("DepVarMean DepVarMean" "num_mun num_mun")		
+esttab using "$directorio/Tables/reg_results/paneliv_sp.csv", se r2 ${star} b(a2)  replace keep(log_ind lgpop median_lum* sexo ) scalars("DepVarMean DepVarMean" "num_mun num_mun")		
 	 
 
 ********************************************************************************
@@ -165,21 +138,21 @@ forvalues year = 2005/2008 {
 		qui gen treat = log(ind+1) if date==yq(`year',`quarter') 
 
 		*Instrument selection
-		qui lasso linear treat (dummy_ent*) lgpop median_lum* sexo salario_promedio x_t_* $instruments $instruments_c 	  
+		qui lasso linear treat (dummy_ent*) lgpop median_lum* sexo  x_t_* $instruments $instruments_c
 		cap vl drop controls_`year'_`quarter'
 		cap vl drop inst_`year'_`quarter'
 		vl create controls_`year'_`quarter' = (`e(allvars_sel)')
 		vl modify controls_`year'_`quarter' = controls_`year'_`quarter' - ($instruments $instruments_c)
 		vl create inst_`year'_`quarter' = (`e(allvars_sel)')
-		vl modify inst_`year'_`quarter' = inst_`year'_`quarter' - (dummy_ent* median_lum* sexo salario_promedio lgpop x_t_*)
+		vl modify inst_`year'_`quarter' = inst_`year'_`quarter' - (dummy_ent* median_lum* sexo  lgpop x_t_*)
 
 		*IV
-		ivreg2 e_t_ ${controls_`year'_`quarter'} (treat = ${inst_`year'_`quarter'}) , robust
+		ivreg2 e_t_ ${controls_`year'_`quarter'} (treat = ${inst_`year'_`quarter'}) if bal_48_imss==1 , cluster(cvemun)
 		cap drop esample_c
 		gen esample_c = (e(sample)==1)
 			
 		*First stage		
-		cap reg treat ${inst_`year'_`quarter'} ${controls_`year'_`quarter'} if esample_c==1, robust
+		cap reg treat ${inst_`year'_`quarter'} ${controls_`year'_`quarter'} if esample_c==1, cluster(cvemun)
 		local k = 1
 		foreach var of varlist total_clues {
 			cap mat coef[`j',`k'] = _b[`var']
@@ -212,9 +185,8 @@ graph export "$directorio/Figuras/IV_FS.pdf", replace
 
 
 foreach var of varlist p_t_ p_1_ p_50_ p_250_ p_1000m_ e_t_ e_1_ e_50_ e_250_ e_1000m_ /// B-C
-		 lg1_ta_femenino lg1_ta_masculino lg1_voluntarios_masculino lg1_voluntarios_femenino lg1_voluntarios /// imss consolidated
-		 lg1_trab_eventual lg1_trab_perm lg1_trab_campo lg1_trab_urb lg1_ta_sal /// asg
-		 lg1_masa_sal_ta* lg1_masa_sal_te lg1_masa_sal_tp lg1_masa_sal_tc lg1_masa_sal_tu {
+		 lg1_masa_sal_ta* /// asg
+		  {
 	preserve
 	
 	matrix iv = J(16,4,.)
@@ -238,7 +210,7 @@ foreach var of varlist p_t_ p_1_ p_50_ p_250_ p_1000m_ e_t_ e_1_ e_50_ e_250_ e_
 			mat iv[`j',4] = `r(mean)'
 
 			*IV
-			ivreg2 `var' ${controls_`year'_`quarter'} (treat = ${inst_`year'_`quarter'}), robust
+			ivreg2 `var' ${controls_`year'_`quarter'} (treat = ${inst_`year'_`quarter'}) if bal_48_imss==1, cluster(cvemun)
 			cap drop esample_c
 			gen esample_c = (e(sample)==1)
 			

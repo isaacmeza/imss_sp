@@ -39,6 +39,7 @@ format date %tq
 
 *Covariates
 gen log_ing = log(ing_x_hrs+1)
+gen casado = inlist(e_con,1,5) if !missing(e_con)
 
 *Informal 
 gen byte informal = (emp_ppal==1) if emp_ppal!=0 & !missing(emp_ppal)
@@ -55,20 +56,20 @@ replace period = 3 if inrange(year,2010,2015)
 **** 		Regression		  *****
 ***********************************
 
-iebaltab sex eda anios_esc t_tra [fw=fac], grpvar(period) save("$directorio\Tables\reg_results\meanvardeps_period.xlsx") vce(robust) replace nottest
+iebaltab sex eda anios_esc t_tra casado [fw=fac], grpvar(period) save("$directorio\Tables\reg_results\meanvardeps_period.xlsx") vce(robust) replace nottest
 
 capture erase "$directorio/Tables/reg_results/determinants_informal.xls"
 capture erase "$directorio/Tables/reg_results/determinants_informal.txt"
 
 
 forvalues p = 2/3 {
-	reghdfe noimss i.sex eda anios_esc i.t_tra [fw = fac] if period==`p', absorb(i.municipio#i.date) vce(robust) 
+	reghdfe noimss i.sex eda anios_esc i.t_tra casado [fw = fac] if period==`p', absorb(i.municipio#i.date) vce(robust) 
 	count if e(sample)==1
 	local obs = `r(N)'
 	su noimss [fw = fac] if e(sample) 	
 	outreg2 using "$directorio/Tables/reg_results/determinants_informal.xls", addstat(Dep var mean, `r(mean)', Obs, `obs') addtext(Municipality $\times$ Date FE, "\checkmark") dec(2) pdec(3)
 	
-	reghdfe noimss i.sex eda anios_esc i.t_tra [fw = fac] if period==`p', absorb(i.scian i.municipio#i.date) vce(robust) 
+	reghdfe noimss i.sex eda anios_esc i.t_tra casado [fw = fac] if period==`p', absorb(i.scian i.municipio#i.date) vce(robust) 
 	count if e(sample)==1
 	local obs = `r(N)'
 	su noimss [fw = fac] if e(sample) 	
@@ -89,12 +90,12 @@ foreach var of varlist  eda anios_esc hrsocup log_ing  {
 }
 
 foreach infvar in noimss informal  {
-matrix coef = J(61,18,.)
+matrix coef = J(61,21,.)
 local i = 1
 forvalues dte = `=yq(2005,1)'/`=yq(2015,4)' {
 	
 	di `dte'
-	qui reghdfe `infvar' 2.sex eda anios_esc hrsocup log_ing 2.t_tra ibn.scian [fw = fac] if date==`dte', absorb(i.municipio) vce(robust) 
+	qui reghdfe `infvar' 2.sex eda anios_esc hrsocup log_ing 2.t_tra casado ibn.scian [fw = fac] if date==`dte', absorb(i.municipio) vce(robust) 
 	matrix coef[`i',1] = _b[2.sex]
 	matrix coef[`i',2] = _b[2.sex] + invnormal(0.975)*_se[2.sex]
 	matrix coef[`i',3] = _b[2.sex] - invnormal(0.975)*_se[2.sex]
@@ -109,12 +110,17 @@ forvalues dte = `=yq(2005,1)'/`=yq(2015,4)' {
 	matrix coef[`i',`j'] = _b[2.t_tra]
 	matrix coef[`i',`=`j'+1'] = _b[2.t_tra] + invnormal(0.975)*_se[2.t_tra]
 	matrix coef[`i',`=`j'+2'] = _b[2.t_tra] - invnormal(0.975)*_se[2.t_tra]
+		local j = `j' + 3
+		
+	matrix coef[`i',`j'] = _b[casado]
+	matrix coef[`i',`=`j'+1'] = _b[casado] + invnormal(0.975)*_se[casado]
+	matrix coef[`i',`=`j'+2'] = _b[casado] - invnormal(0.975)*_se[casado]
 	
 	local i = `i' + 1
 }
 
 local nmes = ""
-foreach var in sex eda anios_esc hrsocup log_ing t_tra {
+foreach var in sex eda anios_esc hrsocup log_ing t_tra casado {
 	local nmes  `nmes' `var'_beta `var'_hi `var'_lo
 }
 
@@ -131,7 +137,7 @@ restore
 
 foreach infvar in noimss informal {
 	use "$directorio\_aux\beta_characteristics_`infvar'.dta", clear
-	foreach var in sex eda anios_esc hrsocup log_ing t_tra {
+	foreach var in sex eda anios_esc hrsocup log_ing t_tra casado {
 		rename (`var'_beta `var'_hi `var'_lo) (`var'_`infvar'_beta `var'_`infvar'_hi `var'_`infvar'_lo)
 	}
 	save "$directorio\_aux\beta_characteristics_`infvar'.dta", replace
@@ -149,7 +155,7 @@ save "$directorio\_aux\beta_characteristics.dta", replace
 use "$directorio\_aux\beta_characteristics.dta", clear
 
 * Coefplot
-foreach var in sex  t_tra {
+foreach var in sex t_tra casado {
 	twoway (lpolyci `var'_noimss_beta qr if qr>`=yq(2004,4)', clcolor(maroon%75) fintensity(inten70)) ///
 		(scatter `var'_noimss_beta qr if qr>`=yq(2004,4)', connect(l) msymbol(Oh) msize(tiny) lcolor(navy%20) mcolor(navy%40)) ///
 		, legend(off) xlabel(180(15)223,format(%tq) labsize(small)) ytitle("Effect in informality : {&Delta} %", size(medium)) ///
@@ -166,7 +172,7 @@ foreach var in sex  t_tra {
 
 
 
-foreach var in sex eda anios_esc hrsocup log_ing t_tra {
+foreach var in eda anios_esc hrsocup log_ing {
 	twoway (lpolyci `var'_noimss_beta qr if qr>`=yq(2004,4)', clcolor(maroon%75) fintensity(inten70)) ///
 		(scatter `var'_noimss_beta qr if qr>`=yq(2004,4)', connect(l) msymbol(Oh) msize(tiny) lcolor(navy%20) mcolor(navy%40)) ///
 		, legend(off) xlabel(180(15)223,format(%tq) labsize(small)) ytitle("Effect in informality : z-score", size(medium)) ///

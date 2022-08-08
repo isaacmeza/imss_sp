@@ -30,8 +30,8 @@ keep if kp==1
 drop u kp
 save "$directorio/_aux/panel_trabajadores.dta", replace
 */
-use "$directorio/_aux/panel_trabajadores.dta", clear
-*use "$directorio/Data Private/panel_trabajadores.dta", clear
+*use "$directorio/_aux/panel_trabajadores.dta", clear
+use "$directorio/Data Private/panel_trabajadores.dta", clear
 duplicates drop
 rename cve_mun_final municipio
 merge m:1 municipio using "Data Original\merge_ss_eneu_final.dta", keepusing(cvemun) keep(1 3) nogen
@@ -87,6 +87,7 @@ by idnss: replace cve_ent_final = cve_ent_final[_n-1] if missing(cve_ent_final) 
 
 *Dependent variable
 gen formal = !missing(ta)
+gen informal = missing(ta)
 gen labor_attachment = .
 
 save "$directorio/Data Created/panel_trabajadores.dta", replace
@@ -152,6 +153,7 @@ by idrp: replace cve_ent_final = cve_ent_final[_n-1] if missing(cve_ent_final) &
 
 *Dependent variable
 gen active = !missing(ta)
+gen inactive = missing(ta)
 gen labor_attachment = .
 
 save "$directorio/Data Created/panel_empresas.dta", replace

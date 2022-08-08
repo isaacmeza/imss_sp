@@ -34,6 +34,6 @@ colorpalette HCL blues, select(1/24) nograph
 local colors `r(p)'
 
 spmap date using "$directorio\_aux\mexmunicoord.dta", id(_ID) fcolor("`colors'") clnumber(24) osize(0.03 ..) ///
-	polygon(data("$directorio\_aux\mexstatecoord.dta") ocolor(white) osize(0.15)) 
+	polygon(data("$directorio\_aux\mexstatecoord.dta") ocolor(white) osize(0.15)) legend(size(medsmall))
 graph export "$directorio/Figuras/sp_geo_coverage.pdf", replace
-
+graph export "$directorio/Figuras/sp_geo_coverage.png", replace

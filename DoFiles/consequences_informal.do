@@ -39,6 +39,7 @@ format date %tq
 
 *Covariates
 gen log_ing = log(ing_x_hrs+1)
+gen casado = inlist(e_con,1,5) if !missing(e_con)
 
 *Informal 
 gen byte informal = (emp_ppal==1) if emp_ppal!=0 & !missing(emp_ppal)
@@ -60,13 +61,13 @@ capture erase "$directorio/Tables/reg_results/consequences_informal.txt"
 
 
 forvalues p = 2/3 {
-	reghdfe log_ing noimss median_lum i.sex eda anios_esc [fw = fac] if period==`p', absorb(i.scian i.municipio#i.date) vce(robust) 
+	reghdfe log_ing noimss median_lum i.sex eda anios_esc casado [fw = fac] if period==`p', absorb(i.scian i.municipio#i.date) vce(robust) 
 	count if e(sample)==1
 	local obs = `r(N)'
 	su log_ing [fw = fac] if e(sample) 	
 	outreg2 using "$directorio/Tables/reg_results/consequences_informal.xls", addstat(Dep var mean, `r(mean)', Obs, `obs') addtext(Municipality $\times$ Date FE, "\checkmark", Occupation FE, "\checkmark") dec(2) pdec(3)	
 	
-	reghdfe hrsocup noimss median_lum i.sex eda anios_esc [fw = fac] if period==`p', absorb(i.scian i.municipio#i.date) vce(robust) 
+	reghdfe hrsocup noimss median_lum i.sex eda anios_esc casado [fw = fac] if period==`p', absorb(i.scian i.municipio#i.date) vce(robust) 
 	count if e(sample)==1
 	local obs = `r(N)'
 	su hrsocup [fw = fac] if e(sample) 	

@@ -37,6 +37,7 @@ format date %tq
 
 *Covariates
 gen log_ing = log(ing_x_hrs+1)
+gen casado = inlist(e_con,1,5) if !missing(e_con)
 
 *Informal 
 gen byte informal = (emp_ppal==1) if emp_ppal!=0 & !missing(emp_ppal)
@@ -76,7 +77,7 @@ foreach var in informal noimss nosat {
 **** 		  CATPLOT	  	  *****
 ***********************************
 
-graph hbar (mean) noimss if scian!=0, over(scian) ytitle("No IMSS %")
+graph hbar (mean) noimss if scian!=0, over(scian, sort(1) descending) ytitle("No IMSS %")
 graph export "$directorio/Figuras/catplot_scian_enoe.pdf", replace	
 
 
