@@ -263,6 +263,17 @@ foreach var in ta te tp tc tu {
 	replace lg1_masa_sal_`var'_1000m = 0 if missing(lg1_masa_sal_`var'_1000m)
 }	
 	
+	
+*Cross-section IMSS
+gen lg1_emp_cross_1 = log(taS1 + 1)
+gen lg1_emp_cross_50 = log(taS2 + taS3 + 1)
+gen lg1_emp_cross_250 = log(taS4 + 1)
+gen lg1_emp_cross_1000m = log(taS5 + taS6 + taS7 + 1)
+	
+foreach var of varlist ta_low_wage ta_high_wage ta_soltero ta_casado {
+	gen lg1_`var' = log(`var' + 1)
+}
+	
 *Mortality
 foreach var of varlist total_d* {
 	gen lg_`var' = log(`var' + 1)

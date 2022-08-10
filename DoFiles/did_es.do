@@ -26,7 +26,7 @@ keep SP_b* cvemun ent date median_lum x_t_* lgpop pob2000 bal_48* /// treatvar &
 		p_t p_1 p_50 p_250 p_1000m e_t e_1 e_50 e_250 e_1000m   /// emp dep var  
 		lg_afiliados_imss* lg1_masa_sal_ta* /// asg
 		lg_total_d* /// mortality dep var
-		sexo lg_salario_promedio /// other vars
+		sexo lg_salario_promedio /* other vars */
 
 *Quarter of implementation
 bysort cvemun : gen q_SP = date if SP_b_p==0
