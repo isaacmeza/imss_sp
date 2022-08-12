@@ -86,7 +86,7 @@ by idnss: replace cvemun = cvemun[_n-1] if missing(cvemun) & !missing(cvemun[_n-
 by idnss: replace cve_ent_final = cve_ent_final[_n-1] if missing(cve_ent_final) & !missing(cve_ent_final[_n-1]) 
 
 *Imputation when drops out of IMSS data
-foreach var of varlist size_cierre sal_cierre /*id_consultorio id_pareja id_padres id_hijos*/ {
+foreach var of varlist size_cierre sal_cierre id_consultorio id_pareja id_padres id_hijos {
 	by idnss : replace `var' = `var'[_n-1] if missing(`var') & !missing(`var'[_n-1])
 } 
 

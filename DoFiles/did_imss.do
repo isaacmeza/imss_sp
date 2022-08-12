@@ -24,7 +24,7 @@ use "$directorio/Data Created/panel_trabajadores.dta", clear
 
 keep if year<=2011
 merge m:1 cvemun date using "Data Created\DiD_DB.dta"
-keep informal size_cierre sal_cierre idnss date ent cvemun median_lum sexo lgpop x_t_* SP_b_p SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16
+keep informal size_cierre sal_cierre idnss high_labor_att date ent cvemun median_lum sexo lgpop x_t_* SP_b_p SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16
 
 
 *Quarter of implementation
