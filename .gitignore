@@ -66,3 +66,6 @@ vignettes/*.pdf
 # ipynb
 /.ipynb_checkpoints/
 /.ipynb_checkpoints/**
+
+# zip files
+*.zip

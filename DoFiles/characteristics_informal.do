@@ -8,9 +8,10 @@ version 17.0
 * Author:	Isaac M
 * Machine:	Isaac M 											
 * Date of creation:	June. 06, 2022
-* Last date of modification: Aug. 1, 2022
+* Last date of modification: Oct. 10, 2022
 * Modifications: Keep INEGI NO IMSS & NO SAT definitions of informality
 	Remove ENE
+	- Collapse dynamic determinants to a single coefficient
 * Files used:     
 		- 
 * Files created:  
@@ -81,7 +82,7 @@ forvalues p = 2/3 {
 
 
 ***********************************
-****   Dynamic determinants   *****
+****   		Determinants   	  *****
 ***********************************
 
 foreach var of varlist  eda anios_esc hrsocup log_ing  {
@@ -89,100 +90,47 @@ foreach var of varlist  eda anios_esc hrsocup log_ing  {
 	replace `var' = (`var'-`r(mean)')/`r(sd)'
 }
 
-foreach infvar in noimss informal  {
-matrix coef = J(61,21,.)
-local i = 1
-forvalues dte = `=yq(2005,1)'/`=yq(2015,4)' {
+
+matrix coef = J(5,3,.)
+matrix coef_scian = J(5,3,.)
+
+reghdfe noimss 2.sex eda anios_esc hrsocup log_ing 2.t_tra casado [fw = fac] if inlist(period,2,3), absorb(i.municipio) vce(robust) 
+	local j = 1
+foreach var of varlist sex {
+	matrix coef[`j',1] = _b[2.`var']
+	matrix coef[`j',2] = _b[2.`var'] - invnormal(.975)*_se[2.`var']
+	matrix coef[`j',3] = _b[2.`var'] + invnormal(.975)*_se[2.`var'] 
+	local j = `j' + 1
+}
+foreach var of varlist casado eda anios_esc hrsocup {
+	matrix coef[`j',1] = _b[`var']
+	matrix coef[`j',2] = _b[`var'] - invnormal(.975)*_se[`var']
+	matrix coef[`j',3] = _b[`var'] + invnormal(.975)*_se[`var'] 
+	local j = `j' + 1
+}
+
+reghdfe noimss 2.sex eda anios_esc hrsocup log_ing 2.t_tra casado ibn.scian [fw = fac] if inlist(period,2,3), absorb(i.municipio) vce(robust) 
+	local j = 1
+foreach var of varlist sex {
+	matrix coef_scian[`j',1] = _b[2.`var']
+	matrix coef_scian[`j',2] = _b[2.`var'] - invnormal(.975)*_se[2.`var']
+	matrix coef_scian[`j',3] = _b[2.`var'] + invnormal(.975)*_se[2.`var'] 
+	local j = `j' + 1
+}
+foreach var of varlist casado eda anios_esc hrsocup {
+	matrix coef_scian[`j',1] = _b[`var']
+	matrix coef_scian[`j',2] = _b[`var'] - invnormal(.975)*_se[`var']
+	matrix coef_scian[`j',3] = _b[`var'] + invnormal(.975)*_se[`var'] 
+	local j = `j' + 1
+}
+
+
+mat rownames coef =  "Woman"  "Married" "Age" "Schooling" "Weekly hours"  
+mat rownames coef_scian =  "Woman"  "Married" "Age" "Schooling" "Weekly hours"  
 	
-	di `dte'
-	qui reghdfe `infvar' 2.sex eda anios_esc hrsocup log_ing 2.t_tra casado ibn.scian [fw = fac] if date==`dte', absorb(i.municipio) vce(robust) 
-	matrix coef[`i',1] = _b[2.sex]
-	matrix coef[`i',2] = _b[2.sex] + invnormal(0.975)*_se[2.sex]
-	matrix coef[`i',3] = _b[2.sex] - invnormal(0.975)*_se[2.sex]
+	coefplot (matrix(coef[,1]), offset(0.06) ci((coef[,2] coef[,3])) msize(large) ciopts(lcolor(gs4))) ///
+	(matrix(coef_scian[,1]), offset(-0.06) ci((coef_scian[,2] coef_scian[,3])) msize(large) ciopts(lcolor(gs4))) , ///
+	legend(order(2 "Municipality FE" 4 "Municipality + Occupation FE") pos(6) rows(1))  xline(0)  graphregion(color(white)) 
+graph export "$directorio/Figuras/beta_characteristics_noimss.pdf", replace
 	
-	local j = 4
-	foreach var in eda anios_esc hrsocup log_ing {
-		matrix coef[`i',`j'] = _b[`var']
-		matrix coef[`i',`=`j'+1'] = _b[`var'] + invnormal(0.975)*_se[`var']
-		matrix coef[`i',`=`j'+2'] = _b[`var'] - invnormal(0.975)*_se[`var']
-		local j = `j' + 3
-	}
-	matrix coef[`i',`j'] = _b[2.t_tra]
-	matrix coef[`i',`=`j'+1'] = _b[2.t_tra] + invnormal(0.975)*_se[2.t_tra]
-	matrix coef[`i',`=`j'+2'] = _b[2.t_tra] - invnormal(0.975)*_se[2.t_tra]
-		local j = `j' + 3
-		
-	matrix coef[`i',`j'] = _b[casado]
-	matrix coef[`i',`=`j'+1'] = _b[casado] + invnormal(0.975)*_se[casado]
-	matrix coef[`i',`=`j'+2'] = _b[casado] - invnormal(0.975)*_se[casado]
 	
-	local i = `i' + 1
-}
-
-local nmes = ""
-foreach var in sex eda anios_esc hrsocup log_ing t_tra casado {
-	local nmes  `nmes' `var'_beta `var'_hi `var'_lo
-}
-
-matrix colnames coef = `nmes'
-preserve
-clear
-svmat coef, names(col) 
-gen qr = _n + yq(2005,1) - 1 if _n + yq(2005,1) -1 <= yq(2015,4)
-save "$directorio\_aux\beta_characteristics_`infvar'.dta", replace
-restore
-}
-
-********************************************************************************
-
-foreach infvar in noimss informal {
-	use "$directorio\_aux\beta_characteristics_`infvar'.dta", clear
-	foreach var in sex eda anios_esc hrsocup log_ing t_tra casado {
-		rename (`var'_beta `var'_hi `var'_lo) (`var'_`infvar'_beta `var'_`infvar'_hi `var'_`infvar'_lo)
-	}
-	save "$directorio\_aux\beta_characteristics_`infvar'.dta", replace
-}
-
-clear 
-set obs 1
-foreach infvar in noimss informal {
-	append using "$directorio\_aux\beta_characteristics_`infvar'.dta"
-}
-save "$directorio\_aux\beta_characteristics.dta", replace
-
-********************************************************************************
-
-use "$directorio\_aux\beta_characteristics.dta", clear
-
-* Coefplot
-foreach var in sex t_tra casado {
-	twoway (lpolyci `var'_noimss_beta qr if qr>`=yq(2004,4)', clcolor(maroon%75) fintensity(inten70)) ///
-		(scatter `var'_noimss_beta qr if qr>`=yq(2004,4)', connect(l) msymbol(Oh) msize(tiny) lcolor(navy%20) mcolor(navy%40)) ///
-		, legend(off) xlabel(180(15)223,format(%tq) labsize(small)) ytitle("Effect in informality : {&Delta} %", size(medium)) ///
-		graphregion(color(white)) yline(0, lcolor(black%90))  name(noimss, replace)
-	graph export "$directorio/Figuras/beta_`var'_noimss.pdf", replace
-		
-	twoway (lpolyci `var'_informal_beta qr if qr>`=yq(2004,4)', clcolor(maroon%75) fintensity(inten70)) ///
-		(scatter `var'_informal_beta qr if qr>`=yq(2004,4)', connect(l) msymbol(Oh) msize(tiny) lcolor(navy%20) mcolor(navy%40)) ///
-		, legend(off) xlabel(180(15)223,format(%tq) labsize(small)) ytitle("Effect in informality : {&Delta} %", size(medium)) ///
-		graphregion(color(white)) yline(0, lcolor(black%90)) name(informal, replace)
-	graph export "$directorio/Figuras/beta_`var'_informal.pdf", replace
-		
-}
-
-
-
-foreach var in eda anios_esc hrsocup log_ing {
-	twoway (lpolyci `var'_noimss_beta qr if qr>`=yq(2004,4)', clcolor(maroon%75) fintensity(inten70)) ///
-		(scatter `var'_noimss_beta qr if qr>`=yq(2004,4)', connect(l) msymbol(Oh) msize(tiny) lcolor(navy%20) mcolor(navy%40)) ///
-		, legend(off) xlabel(180(15)223,format(%tq) labsize(small)) ytitle("Effect in informality : z-score", size(medium)) ///
-		graphregion(color(white)) yline(0, lcolor(black%90))  name(noimss, replace)
-	graph export "$directorio/Figuras/beta_`var'_noimss.pdf", replace
-		
-	twoway (lpolyci `var'_informal_beta qr if qr>`=yq(2004,4)', clcolor(maroon%75) fintensity(inten70)) ///
-		(scatter `var'_informal_beta qr if qr>`=yq(2004,4)', connect(l) msymbol(Oh) msize(tiny) lcolor(navy%20) mcolor(navy%40)) ///
-		, legend(off) xlabel(180(15)223,format(%tq) labsize(small)) ytitle("Effect in informality : z-score", size(medium)) ///
-		graphregion(color(white)) yline(0, lcolor(black%90)) name(informal, replace)
-	graph export "$directorio/Figuras/beta_`var'_informal.pdf", replace
-		
-}
