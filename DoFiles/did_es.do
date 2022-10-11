@@ -8,8 +8,8 @@ version 17.0
 * Author:	Isaac M
 * Machine:	Isaac M 											
 * Date of creation:	July. 28, 2022
-* Last date of modification: 
-* Modifications: 
+* Last date of modification: Oct. 10, 2022
+* Modifications: Use event_plot and keep only result for e_t p_t p_1.
 * Files used:     
 		- 
 * Files created:  
@@ -20,6 +20,8 @@ version 17.0
 */
 
 use  "Data Created\DiD_DB.dta", clear	
+drop bal_48 
+merge 1:1 cvemun date using "Data Created\DiD_BC.dta", keepusing(bal_48)
 
 keep if year<=2011
 keep SP_b* cvemun ent date median_lum x_t_* lgpop pob2000 bal_48* /// treatvar & controls
@@ -40,174 +42,61 @@ gen median_lum3 = median_lum2*median_lum
 
 
 *Period of implementation dummies
-tab SP_b_col, gen(SP_b_col)
+tab SP_b_p, gen(SP_b_p)
 
 
 ********** EVENT STUDIES ************
 *************************************
 *************************************
 
-******************************** B - C *****************************************
-foreach var of varlist p_t p_1 p_50 p_250 p_1000m e_t e_1 e_50 e_250 e_1000m { 
 
-	*Luminosity (+ other controls) (+ quarter of implementation)
-	xi : xtreg `var' i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* sexo c.date#i.q_imp SP_b_col1-SP_b_col3 SP_b_col5-SP_b_col11 [aw=pob2000] if bal_48==1, fe cluster(cvemun)
-	matrix event_SP_b = J(11,5,.)	
-	forvalues j = 1/11 {
-		if `j'!=4 {
-			matrix event_SP_b[`j',1] = _b[SP_b_col`j']
-			matrix event_SP_b[`j',2] = _b[SP_b_col`j'] + invnormal(0.975)*_se[SP_b_col`j']
-			matrix event_SP_b[`j',3] = _b[SP_b_col`j'] - invnormal(0.975)*_se[SP_b_col`j']
-			matrix event_SP_b[`j',4] = _b[SP_b_col`j'] + invnormal(0.95)*_se[SP_b_col`j']
-			matrix event_SP_b[`j',5] = _b[SP_b_col`j'] - invnormal(0.95)*_se[SP_b_col`j']		
+foreach var in   p_1   { 
+	
+	*B-C + more municpalities
+	xi : xtreg `var' SP_b_p1-SP_b_p15 SP_b_p17-SP_b_p41 i.date lgpop x_t_* i.ent*date i.ent*date2 i.ent*date3 [aw=pob2000], fe robust cluster(cvemun)
+	matrix event_bc_`var' = J(37,1,.)	
+	matrix se_bc_`var' = J(37,1,.)		
+	forvalues j = 5/41 {
+		if `j'!=16 {
+			matrix event_bc_`var'[`j'-4,1] = _b[SP_b_p`j']
+			matrix se_bc_`var'[`j'-4,1] = (_se[SP_b_p`j'])^2
 		}
 	}
-	
-	********** EVENT PLOT ************
-	preserve
-	clear 
-	svmat event_SP_b
-	
-	cap drop period
-	gen period = _n - 5 if inrange(_n,1,11)
-			
-	twoway (scatter event_SP_b1 period, color(black) lcolor(gs10%50) msize(medium) connect(line)) /// 
-		(rcap event_SP_b2 event_SP_b3 period, color(navy%50)) /// 
-		(rcap event_SP_b4 event_SP_b5 period, color(navy)) ///
-		, legend(off) xline(-1) yline(0, lcolor(red)) xtitle("Period (year) relative to treatment")
-	graph export "$directorio/Figuras/did_event_`var'.pdf", replace	
-	restore
-}	
-	
-	
-******************************** IMSS ******************************************
-foreach var of varlist lg_afiliados_imss* lg1_masa_sal_ta* /// imss consolidated
-		{ 
+	mat rownames event_bc_`var' = "Pre12" "Pre11" "Pre10" "Pre9" "Pre8" "Pre7" "Pre6" "Pre5" "Pre4" "Pre3" "Pre2" "omitted" "Post0" "Post1" "Post2" "Post3" "Post4" "Post5" "Post6" "Post7" "Post8" "Post9" "Post10" "Post11" "Post12" "Post13" "Post14" "Post15" "Post16"
+	mat rownames se_bc_`var' =  "Pre12" "Pre11" "Pre10" "Pre9" "Pre8" "Pre7" "Pre6" "Pre5" "Pre4" "Pre3" "Pre2" "omitted" "Post0" "Post1" "Post2" "Post3" "Post4" "Post5" "Post6" "Post7" "Post8" "Post9" "Post10" "Post11" "Post12" "Post13" "Post14" "Post15" "Post16"
 
-	*B-C
-	xi : xtreg `var' i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* SP_b_col1-SP_b_col3 SP_b_col5-SP_b_col11 [aw=pob2000] if bal_48==1, fe cluster(cvemun)
-	matrix event_SP_b = J(11,5,.)	
-	forvalues j = 1/11 {
-		if `j'!=4 {
-			matrix event_SP_b[`j',1] = _b[SP_b_col`j']
-			matrix event_SP_b[`j',2] = _b[SP_b_col`j'] + invnormal(0.975)*_se[SP_b_col`j']
-			matrix event_SP_b[`j',3] = _b[SP_b_col`j'] - invnormal(0.975)*_se[SP_b_col`j']
-			matrix event_SP_b[`j',4] = _b[SP_b_col`j'] + invnormal(0.95)*_se[SP_b_col`j']
-			matrix event_SP_b[`j',5] = _b[SP_b_col`j'] - invnormal(0.95)*_se[SP_b_col`j']		
-		}
-	}
-	
-	********** EVENT PLOT ************
-	preserve
-	clear 
-	svmat event_SP_b
-	
-	cap drop period
-	gen period = _n - 5 if inrange(_n,1,11)
-			
-	twoway (scatter event_SP_b1 period, color(black) lcolor(gs10%50) msize(medium) connect(line)) /// 
-		(rcap event_SP_b2 event_SP_b3 period, color(navy%50)) /// 
-		(rcap event_SP_b4 event_SP_b5 period, color(navy)) ///
-		, legend(off) xline(-1) yline(0, lcolor(red)) xtitle("Period (year) relative to treatment")
-	graph export "$directorio/Figuras/did_event_`var'_bc.pdf", replace	
-	restore
-	
-	
-	
-*-------------------------------------------------------------------------------
-	
-	
+	event_plot event_bc_`var'#se_bc_`var', default_look ///
+		graph_opt(xtitle("Quarters since SP adoption") ytitle("Average causal effect") ///
+		title("") xlabel(-12(4)16)) stub_lag(Post#) stub_lead(Pre#) together
+	graph export "$directorio/Figuras/did_event_mun_`var'.pdf", replace	
+}
 	
 	*Luminosity (+ other controls) (+ quarter of implementation)
-	xi : xtreg `var' i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* sexo c.date#i.q_imp SP_b_col1-SP_b_col3 SP_b_col5-SP_b_col11 [aw=pob2000] if bal_48_imss==1, fe cluster(cvemun)
-	matrix event_SP_b = J(11,5,.)	
-	forvalues j = 1/11 {
-		if `j'!=4 {
-			matrix event_SP_b[`j',1] = _b[SP_b_col`j']
-			matrix event_SP_b[`j',2] = _b[SP_b_col`j'] + invnormal(0.975)*_se[SP_b_col`j']
-			matrix event_SP_b[`j',3] = _b[SP_b_col`j'] - invnormal(0.975)*_se[SP_b_col`j']
-			matrix event_SP_b[`j',4] = _b[SP_b_col`j'] + invnormal(0.95)*_se[SP_b_col`j']
-			matrix event_SP_b[`j',5] = _b[SP_b_col`j'] - invnormal(0.95)*_se[SP_b_col`j']		
+	xi : xtreg `var' SP_b_p1-SP_b_p15 SP_b_p17-SP_b_p41 i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* sexo c.date#i.q_imp [aw=pob2000] if bal_48==1, fe cluster(cvemun)
+	matrix event_bc_`var' = J(37,1,.)	
+	matrix se_bc_`var' = J(37,1,.)		
+	forvalues j = 5/41 {
+		if `j'!=16 {
+			matrix event_bc_`var'[`j'-4,1] = _b[SP_b_p`j']
+			matrix se_bc_`var'[`j'-4,1] = (_se[SP_b_p`j'])^2
 		}
 	}
-	
-	********** EVENT PLOT ************
-	preserve
-	clear 
-	svmat event_SP_b
-	
-	cap drop period
-	gen period = _n - 5 if inrange(_n,1,11)
-			
-	twoway (scatter event_SP_b1 period, color(black) lcolor(gs10%50) msize(medium) connect(line)) /// 
-		(rcap event_SP_b2 event_SP_b3 period, color(navy%50)) /// 
-		(rcap event_SP_b4 event_SP_b5 period, color(navy)) ///
-		, legend(off) xline(-1) yline(0, lcolor(red)) xtitle("Period (year) relative to treatment")
-	graph export "$directorio/Figuras/did_event_`var'.pdf", replace	
-	restore
-}	
-	
+	mat rownames event_bc_`var' = "Pre12" "Pre11" "Pre10" "Pre9" "Pre8" "Pre7" "Pre6" "Pre5" "Pre4" "Pre3" "Pre2" "omitted" "Post0" "Post1" "Post2" "Post3" "Post4" "Post5" "Post6" "Post7" "Post8" "Post9" "Post10" "Post11" "Post12" "Post13" "Post14" "Post15" "Post16"
+	mat rownames se_bc_`var' =  "Pre12" "Pre11" "Pre10" "Pre9" "Pre8" "Pre7" "Pre6" "Pre5" "Pre4" "Pre3" "Pre2" "omitted" "Post0" "Post1" "Post2" "Post3" "Post4" "Post5" "Post6" "Post7" "Post8" "Post9" "Post10" "Post11" "Post12" "Post13" "Post14" "Post15" "Post16"		
+
+	event_plot event_bc_`var'#se_bc_`var', default_look ///
+		graph_opt(xtitle("Quarters since SP adoption") ytitle("Average causal effect") ///
+		title("") xlabel(-12(4)16)) stub_lag(Post#) stub_lead(Pre#) together
+	graph export "$directorio/Figuras/did_event_flex_`var'.pdf", replace	
+}
 
 
-******************************** MORTALITY *************************************
-foreach var of varlist lg_total_d* { 
 
-	*B-C
-	xi : xtreg `var' i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* sexo c.date#i.q_imp SP_b_col1-SP_b_col3 SP_b_col5-SP_b_col11 [aw=pob2000] if bal_48_imss==1, fe cluster(cvemun)
-	matrix event_SP_b = J(11,5,.)	
-	forvalues j = 1/11 {
-		if `j'!=4 {
-			matrix event_SP_b[`j',1] = _b[SP_b_col`j']
-			matrix event_SP_b[`j',2] = _b[SP_b_col`j'] + invnormal(0.975)*_se[SP_b_col`j']
-			matrix event_SP_b[`j',3] = _b[SP_b_col`j'] - invnormal(0.975)*_se[SP_b_col`j']
-			matrix event_SP_b[`j',4] = _b[SP_b_col`j'] + invnormal(0.95)*_se[SP_b_col`j']
-			matrix event_SP_b[`j',5] = _b[SP_b_col`j'] - invnormal(0.95)*_se[SP_b_col`j']		
-		}
-	}
-	
-	********** EVENT PLOT ************
-	preserve
-	clear 
-	svmat event_SP_b
-	
-	cap drop period
-	gen period = _n - 5 if inrange(_n,1,11)
-			
-	twoway (scatter event_SP_b1 period, color(black) lcolor(gs10%50) msize(medium) connect(line)) /// 
-		(rcap event_SP_b2 event_SP_b3 period, color(navy%50)) /// 
-		(rcap event_SP_b4 event_SP_b5 period, color(navy)) ///
-		, legend(off) xline(-1) yline(0, lcolor(red)) xtitle("Period (year) relative to treatment")
-	graph export "$directorio/Figuras/did_event_`var'.pdf", replace	
-	restore
-	
-*-------------------------------------------------------------------------------
 
-	*Luminosity (+ other controls) (+ quarter of implementation)
-	xi : xtreg `var' i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* sexo c.date#i.q_imp SP_b_col1-SP_b_col3 SP_b_col5-SP_b_col11 [aw=pob2000] if bal_48_d==1, fe cluster(cvemun)
-	matrix event_SP_b = J(11,5,.)	
-	forvalues j = 1/11 {
-		if `j'!=4 {
-			matrix event_SP_b[`j',1] = _b[SP_b_col`j']
-			matrix event_SP_b[`j',2] = _b[SP_b_col`j'] + invnormal(0.975)*_se[SP_b_col`j']
-			matrix event_SP_b[`j',3] = _b[SP_b_col`j'] - invnormal(0.975)*_se[SP_b_col`j']
-			matrix event_SP_b[`j',4] = _b[SP_b_col`j'] + invnormal(0.95)*_se[SP_b_col`j']
-			matrix event_SP_b[`j',5] = _b[SP_b_col`j'] - invnormal(0.95)*_se[SP_b_col`j']		
-		}
-	}
-	
-	********** EVENT PLOT ************
-	preserve
-	clear 
-	svmat event_SP_b
-	
-	cap drop period
-	gen period = _n - 5 if inrange(_n,1,11)
-			
-	twoway (scatter event_SP_b1 period, color(black) lcolor(gs10%50) msize(medium) connect(line)) /// 
-		(rcap event_SP_b2 event_SP_b3 period, color(navy%50)) /// 
-		(rcap event_SP_b4 event_SP_b5 period, color(navy)) ///
-		, legend(off) xline(-1) yline(0, lcolor(red)) xtitle("Period (year) relative to treatment")
-	graph export "$directorio/Figuras/did_event_`var'_2.pdf", replace	
-	restore
-}		
+did_multiplegt p_t cvemun date SP_b, robust_dynamic dynamic(16) placebo(12) breps(3)  controls(lgpop x_t_* median_lum* sexo) cluster(cvemun)
 
+event_plot e(estimates)#e(variances), default_look ///
+	graph_opt(xtitle("Quarters since SP adoption") ytitle("Average causal effect") ///
+		title("") xlabel(-12(4)16)) stub_lag(Effect_#) stub_lead(Placebo_#) together
+	
+	
