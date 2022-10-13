@@ -17,7 +17,6 @@ version 17.0
 * Files created:  
 
 * Purpose: Comparison of formal and informal worker's characteristics
-
 *******************************************************************************/
 */
 
