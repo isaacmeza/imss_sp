@@ -106,9 +106,7 @@ esttab using "$directorio/Tables/reg_results/pretime_trends_instrument_4q.csv", 
 *Panel IV
 
 eststo clear
-foreach var of varlist p_t_ p_1_ p_50_ p_250_ p_1000m_ e_t_ e_1_ e_50_ e_250_ e_1000m_ /// B-C
-		 lg1_masa_sal_ta* /// asg
-		  {
+foreach var of varlist p_t_ p_1_ e_t_ {
 	eststo : xi : xtivreg2 `var' lgpop median_lum* sexo  x_t_* i.date1 (log_ind = $instruments_c $instruments) [aw=pob2000] if inrange(date,yq(2004,1),yq(2009,4)) & bal_48_imss==1, fe cluster(cvemun) 
 	qui levelsof cvemun if e(sample)==1 
 	local num_mun = `r(r)'
@@ -184,7 +182,7 @@ twoway (rarea coef2 coef3 n, color(blue%25)) (scatter coef1 n, color(black) conn
 graph export "$directorio/Figuras/IV_FS.pdf", replace	
 
 
-foreach var of varlist p_t_ p_1_ p_50_ p_250_ p_1000m_ e_t_ e_1_ e_50_ e_250_ e_1000m_ /// B-C
+foreach var of varlist p_t_ p_1_ e_t_  /// B-C
 		 lg1_masa_sal_ta* /// asg
 		  {
 	preserve
