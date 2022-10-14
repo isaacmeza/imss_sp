@@ -58,7 +58,7 @@ tab SP_b_p, gen(SP_b_p)
 foreach var in  p_t p_1 e_t { 
 	
 	*B-C + more municpalities
-	xi : xtreg `var'_ SP_b_p1-SP_b_p15 SP_b_p17-SP_b_p41 i.date lgpop x_t_*  [aw=pob2000] if bal_48_imss==1, fe robust cluster(cvemun)
+	xi : xtreg `var'_ SP_b_p1-SP_b_p15 SP_b_p17-SP_b_p41  i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_*  [aw=pob2000] if bal_48_imss==1, fe robust cluster(cvemun)
 	matrix event_bc_`var' = J(37,1,.)	
 	matrix se_bc_`var' = J(37,1,.)		
 	forvalues j = 5/41 {
@@ -94,7 +94,7 @@ foreach var in  p_t p_1 e_t {
 	graph export "$directorio/Figuras/did_event_flex_`var'.pdf", replace	
 	
 	*de Chaisemartin, C and D'Haultfoeuille, X (2020b).  Difference-in-Differences Estimators of Intertemporal Treatment Effects.
-	did_multiplegt `var' cvemun date SP_b if bal_48==1, robust_dynamic dynamic(16) placebo(12) breps(200)  controls(lgpop x_t_* median_lum* sexo ent_d*) weight(pob2000) cluster(cvemun)
+	did_multiplegt `var' cvemun date SP_b if bal_48==1, robust_dynamic dynamic(16) placebo(12) breps(200) controls(lgpop x_t_* median_lum* sexo) weight(pob2000) cluster(cvemun)
 
 	event_plot e(estimates)#e(variances), default_look ///
 		graph_opt(xtitle("Quarters since SP adoption") ytitle("Average causal effect") ///
