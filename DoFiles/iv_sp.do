@@ -47,7 +47,7 @@ vl create instruments = (dummy_gov1 dummy_gov2)
 
 
 eststo clear
-foreach var in p_t_ e_t_  /// imss consolidated
+foreach var in p_t_ p_1_ e_t_  /// imss consolidated
 		 lg1_masa_sal_ta /// asg
 		  {
 	*Pre-time trends
@@ -75,7 +75,7 @@ esttab using "$directorio/Tables/reg_results/pretime_trends_instrument_1q.csv", 
 	
 	
 eststo clear
-foreach var in  p_t_ e_t_  /// imss consolidated
+foreach var in  p_t_ p_1_ e_t_  /// imss consolidated
 		 lg1_masa_sal_ta /// asg
 		  {
 	*Pre-time trends	
@@ -106,7 +106,7 @@ esttab using "$directorio/Tables/reg_results/pretime_trends_instrument_4q.csv", 
 *Panel IV
 
 eststo clear
-foreach var of varlist p_t_ p_1_ e_t_ {
+foreach var of varlist p_t_ p_1_ e_t_ lg1_masa_sal_ta* {
 	eststo : xi : xtivreg2 `var' lgpop median_lum* sexo  x_t_* i.date1 (log_ind = $instruments_c $instruments) [aw=pob2000] if inrange(date,yq(2004,1),yq(2009,4)) & bal_48_imss==1, fe cluster(cvemun) 
 	qui levelsof cvemun if e(sample)==1 
 	local num_mun = `r(r)'
@@ -237,8 +237,7 @@ foreach var of varlist p_t_ p_1_ e_t_  /// B-C
 	
 	*Second stage	
 	twoway (rarea iv2 iv3 n, color(blue%25)) (scatter iv1 n, color(black) connect(line)) ///
-	(scatter iv4 n , color(maroon) connect(line) yaxis(2)) ///
-		, legend(order(2 "SP" 3 "Share treated") rows(1) pos(6)) name(second_c, replace) yline(0) ytitle("Elasticity", axis(1)) ytitle("Share of treated", axis(2)) xtitle("")
+		, legend(off) name(second_c, replace) yline(0) ytitle("Elasticity", axis(1)) xtitle("")
 	graph export "$directorio/Figuras/IV_SP_`var'.pdf", replace
 	
 	
