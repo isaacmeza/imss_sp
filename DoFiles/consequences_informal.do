@@ -8,13 +8,14 @@ version 17.0
 * Author:	Isaac M
 * Machine:	Isaac M 											
 * Date of creation: June. 26, 2022
-* Last date of modification: Aug. 1, 2022
+* Last date of modification: Oct. 18, 2022
 * Modifications: Remove ENE
+	- Change of specification
 * Files used:     
 		- 
 * Files created:  
 
-* Purpose: 
+* Purpose: We estimate the difference in wage between IMSS and no-IMSS 
 
 *******************************************************************************/
 */
@@ -52,27 +53,26 @@ replace period = 1 if inrange(year,2000,2004)
 replace period = 2 if inrange(year,2005,2010)
 replace period = 3 if inrange(year,2010,2015)
 
+*ID
+egen id_ = group(cd_a ent con v_sel n_hog h_mud n_ren)
+sort id_ date
+by id_ : gen id_1 = (n_ent[_n]!=n_ent[_n-1]+1 | date[_n]!=date[_n-1]+1) 
+by id_ : gen id_aux = sum(id_1)
+egen id = group(id_ id_aux)
+
 ***********************************
 **** 		Regression		  *****
 ***********************************
 
 capture erase "$directorio/Tables/reg_results/consequences_informal.xls"
 capture erase "$directorio/Tables/reg_results/consequences_informal.txt"
-
-
-forvalues p = 2/3 {
-	reghdfe log_ing noimss median_lum i.sex eda anios_esc casado [fw = fac] if period==`p', absorb(i.scian i.municipio#i.date) vce(robust) 
+	
+	reghdfe log_ing noimss median_lum i.sex eda anios_esc casado i.scian [fw = fac] , absorb(i.municipio#i.date id) vce(robust) 
 	count if e(sample)==1
 	local obs = `r(N)'
 	su log_ing [fw = fac] if e(sample) 	
-	outreg2 using "$directorio/Tables/reg_results/consequences_informal.xls", addstat(Dep var mean, `r(mean)', Obs, `obs') addtext(Municipality $\times$ Date FE, "\checkmark", Occupation FE, "\checkmark") dec(2) pdec(3)	
+	outreg2 using "$directorio/Tables/reg_results/consequences_informal.xls", addstat(Dep var mean, `r(mean)', Obs, `obs') addtext(Municipality $\times$ Date FE, "\checkmark", Occupation FE, "\checkmark", Individual FE, "\checkmark") dec(2) pdec(3)		
 	
-	reghdfe hrsocup noimss median_lum i.sex eda anios_esc casado [fw = fac] if period==`p', absorb(i.scian i.municipio#i.date) vce(robust) 
-	count if e(sample)==1
-	local obs = `r(N)'
-	su hrsocup [fw = fac] if e(sample) 	
-	outreg2 using "$directorio/Tables/reg_results/consequences_informal.xls", addstat(Dep var mean, `r(mean)', Obs, `obs') addtext(Municipality $\times$ Date FE, "\checkmark", Occupation FE, "\checkmark") dec(2) pdec(3)		
-}
 
 ********************************************************************************
 

@@ -7,14 +7,14 @@ version 17.0
 * Name of file:	
 * Author:	Isaac M
 * Machine:	Isaac M 											
-* Date of creation:	July. 28, 2022
-* Last date of modification: Oct. 10, 2022
-* Modifications: Use event_plot and keep only result for e_t p_t p_1.
+* Date of creation:	Oct. 18, 2022
+* Last date of modification: 
+* Modifications: 
 * Files used:     
 		- 
 * Files created:  
 
-* Purpose: 
+* Purpose: DiD Heterogeneous effects 
 
 *******************************************************************************/
 */ 

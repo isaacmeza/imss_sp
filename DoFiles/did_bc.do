@@ -35,10 +35,10 @@ tab xxx, gen(xxx)
 *************************************
 *************************************
 foreach var in p_t p_1 e_t { 
-	xi : xtreg `var' xxx1-xxx15 xxx17-xxx41 i.date logpop x_t_* i.ent*date i.ent*date2 i.ent*date3 [aw=pob2000] if bal_48==1, fe robust cluster(cvemun)
-	matrix event_bc_`var' = J(37,1,.)	
-	matrix se_bc_`var' = J(37,1,.)		
-	forvalues j = 5/41 {
+	xi : xtreg `var' xxx1-xxx15 xxx17-xxx33 i.date logpop x_t_* i.ent*date i.ent*date2 i.ent*date3 [aw=pob2000] if bal_48==1, fe robust cluster(cvemun)
+	matrix event_bc_`var' = J(29,1,.)	
+	matrix se_bc_`var' = J(29,1,.)		
+	forvalues j = 5/33 {
 		if `j'!=16 {
 			matrix event_bc_`var'[`j'-4,1] = _b[xxx`j']
 			matrix se_bc_`var'[`j'-4,1] = (_se[xxx`j'])^2

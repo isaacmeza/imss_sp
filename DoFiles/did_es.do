@@ -32,6 +32,8 @@ keep SP_b* cvemun ent date median_lum x_t_* lgpop pob2000 bal_48* /// treatvar &
 
 gen e_t_ = lg1_afiliados_imss	
 gen p_1_ = lg1_afiliados_imss_1	
+gen lg1_masa_sal_ta_ = lg1_masa_sal_ta	
+gen lg1_masa_sal_ta_1_ = lg1_masa_sal_ta_1	
 		
 *Quarter of implementation
 bysort cvemun : gen q_SP = date if SP_b_p==0
@@ -55,7 +57,7 @@ tab SP_b_p, gen(SP_b_p)
 *************************************
 
 
-foreach var in  p_t p_1 e_t { 
+foreach var in  p_t p_1 e_t lg1_masa_sal_ta lg1_masa_sal_ta_1 { 
 	
 	*B-C + more municpalities
 	xi : xtreg `var'_ SP_b_p1-SP_b_p15 SP_b_p17-SP_b_p41  i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_*  [aw=pob2000] if bal_48_imss==1, fe robust cluster(cvemun)

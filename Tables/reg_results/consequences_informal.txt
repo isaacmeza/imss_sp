@@ -1,26 +1,67 @@
-	(1)	(2)	(3)	(4)
-VARIABLES	log_ing	hrsocup	log_ing	hrsocup
-				
-noimss	-0.23***	-5.79***	-0.15***	-6.50***
-	(0.00)	(0.00)	(0.00)	(0.00)
-o.median_lum	-	-	-	-
-				
-2.sex	-0.12***	-7.33***	-0.06***	-7.21***
-	(0.00)	(0.00)	(0.00)	(0.00)
-eda	-0.00***	0.01***	-0.00***	0.00***
-	(0.00)	(0.00)	(0.00)	(0.00)
-anios_esc	0.01***	0.04***	-0.01***	0.03***
-	(0.00)	(0.00)	(0.00)	(0.00)
-casado	0.25***	1.59***	0.23***	1.50***
-	(0.00)	(0.00)	(0.00)	(0.00)
-Constant	2.31***	46.72***	2.41***	47.36***
-	(0.00)	(0.00)	(0.00)	(0.00)
-				
-Observations	887,534,856	887,534,856	1169577977	1169577977
-R-squared	0.18	0.16	0.14	0.17
-Municipality $\times$ Date FE	\checkmark	\checkmark	\checkmark	\checkmark
-Occupation FE	\checkmark	\checkmark	\checkmark	\checkmark
-Dep var mean	2.272	41.29	2.213	41.21
-Obs	3.376e+06	3.376e+06	3.991e+06	3.991e+06
-Robust standard errors in parentheses				
-*** p<0.01, ** p<0.05, * p<0.1				
+	(1)
+VARIABLES	log_ing
+	
+noimss	-0.08***
+	(0.00)
+o.median_lum	-
+	
+2.sex	-0.33***
+	(0.01)
+eda	-0.00***
+	(0.00)
+anios_esc	-0.00***
+	(0.00)
+casado	0.10***
+	(0.01)
+2.scian	0.65***
+	(0.00)
+3.scian	0.69***
+	(0.00)
+4.scian	0.83***
+	(0.00)
+5.scian	0.57***
+	(0.00)
+6.scian	0.56***
+	(0.00)
+7.scian	0.46***
+	(0.00)
+8.scian	0.70***
+	(0.00)
+9.scian	0.61***
+	(0.00)
+10.scian	0.63***
+	(0.00)
+11.scian	0.68***
+	(0.00)
+12.scian	0.62***
+	(0.00)
+13.scian	0.76***
+	(0.00)
+14.scian	0.61***
+	(0.00)
+15.scian	0.70***
+	(0.00)
+16.scian	0.65***
+	(0.00)
+17.scian	0.87***
+	(0.00)
+18.scian	0.53***
+	(0.00)
+19.scian	0.71***
+	(0.00)
+20.scian	0.75***
+	(0.00)
+21.scian	0.33***
+	(0.00)
+Constant	2.05***
+	(0.01)
+	
+Observations	2057112833
+R-squared	0.57
+Municipality $\times$ Date FE	\checkmark
+Occupation FE	\checkmark
+Individual FE	\checkmark
+Dep var mean	2.238
+Obs	7.367e+06
+Robust standard errors in parentheses	
+*** p<0.01, ** p<0.05, * p<0.1	

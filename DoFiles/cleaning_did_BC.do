@@ -165,7 +165,7 @@ bys cvemun: egen tmax=max(TT*date)
 gen xxx=date-tmax	//temporal variable//
 replace xxx=-16 if xxx<-16
 replace xxx=. if xxx>50
-replace xxx=24 if xxx>24 & xxx!=.
+replace xxx=16 if xxx>16 & xxx!=.
 
 *Collapsed period of treatment
 gen SP_BC_col = .
