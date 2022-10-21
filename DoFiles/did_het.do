@@ -7,14 +7,14 @@ version 17.0
 * Name of file:	
 * Author:	Isaac M
 * Machine:	Isaac M 											
-* Date of creation:	Oct. 18, 2022
+* Date of creation:	Oct. 10, 2022
 * Last date of modification: 
 * Modifications: 
 * Files used:     
 		- 
 * Files created:  
 
-* Purpose: DiD Heterogeneous effects 
+* Purpose: Heterogeneity results using Chaisemartin and D'Haultfoeuille.
 
 *******************************************************************************/
 */ 
@@ -54,7 +54,7 @@ tab SP_b_p, gen(SP_b_p)
 *************************************************************
 *************************************************************
 
-local breps = 3
+local breps = 50
 
 matrix dd = J(12,3,.)
 matrix pt = J(12,1,.)
@@ -67,7 +67,7 @@ foreach var of varlist lg_ta_femenino lg_ta_masculino  /// imss consolidated
 		 lg_trab_eventual lg_trab_perm lg_trab_campo lg_trab_urb lg_ta_sal lg1_voluntarios /// asg
 		 { 	
 					
-			did_multiplegt p_t cvemun date SP_b if bal_48_imss==1, robust_dynamic average_effect dynamic(16) placebo(8) jointtestplacebo covariances breps(`breps')  controls(lgpop x_t_* median_lum* sexo) weight(pob2000) cluster(cvemun)
+			did_multiplegt `var' cvemun date SP_b if bal_48_imss==1, robust_dynamic average_effect dynamic(16) placebo(8) jointtestplacebo covariances breps(`breps')  controls(lgpop x_t_* median_lum* sexo) weight(pob2000) cluster(cvemun)
 			
 			matrix dd[`j',1] =   e(effect_average)
 			matrix dd[`j',2] =   e(effect_average) - invnormal(.975)*e(se_effect_average)
@@ -85,7 +85,7 @@ eststo clear
 foreach var of varlist lg1_ta_low_wage lg1_ta_high_wage lg1_ta_soltero  lg1_ta_casado /// Cross-IMSS
 		 { 		
 		 						
-			did_multiplegt p_t cvemun date SP_b if bal_48_imss==1, robust_dynamic average_effect dynamic(16) placebo(8) jointtestplacebo covariances breps(`breps')  controls(lgpop x_t_* median_lum* sexo) weight(pob2000) cluster(cvemun)
+			did_multiplegt `var' cvemun date SP_b if bal_48_imss==1, robust_dynamic average_effect dynamic(16) placebo(8) jointtestplacebo covariances breps(`breps')  controls(lgpop x_t_* median_lum* sexo) weight(pob2000) cluster(cvemun)
 			
 			matrix dd[`j',1] =   e(effect_average)
 			matrix dd[`j',2] =   e(effect_average) - invnormal(.975)*e(se_effect_average)
@@ -95,15 +95,32 @@ foreach var of varlist lg1_ta_low_wage lg1_ta_high_wage lg1_ta_soltero  lg1_ta_c
 			
 			local j = `j' + 1
 		 }
-		 	
+		 		
+	
+matrix dd_nosig = J(12,3,.)
+forvalues j = 1/12 {
+    if  pt[`j',1] < 0.05 {
+		matrix dd_nosig[`j',1] = dd[`j',1] 
+		matrix dd_nosig[`j',2] = dd[`j',2] 
+		matrix dd_nosig[`j',3] = dd[`j',3] 
+	}
+}	
 
 mat rownames dd =  "Female"  "Male" "Temporal" "Permanent" "Rural" "Urban" "Asalaried" "Voluntary" "Low-wage" "High-wage" "Single" "Married"
-  
+mat rownames dd_nosig =  "Female"  "Male" "Temporal" "Permanent" "Rural" "Urban" "Asalaried" "Voluntary" "Low-wage" "High-wage" "Single" "Married"
 mat rownames pt =  "Female"  "Male" "Temporal" "Permanent" "Rural" "Urban" "Asalaried" "Voluntary" "Low-wage" "High-wage" "Single" "Married"
-	
+
+
 	coefplot (matrix(dd[,1]), offset(0.06) ci((dd[,2] dd[,3])) msize(large) ciopts(lcolor(gs4))) ///
-	(matrix(pt[,1]), axis(2) offset(-0.06) msize(large) ciopts(lcolor(gs4))) , ///
-	legend(order(2 "DiD Effect" 4 "Join test placebo") pos(6) rows(1))  xline(0)  graphregion(color(white)) 
+	(matrix(dd_nosig[,1]), offset(0.06) ci((dd_nosig[,2] dd_nosig[,3])) msize(large) ciopts(lcolor(gs4))) , ///
+	legend(order(2 "DiD Effect" 4 "No parallel trends") pos(6) rows(1))  xline(0)  graphregion(color(white)) 
 graph export "$directorio/Figuras/did_het.pdf", replace
+	
+
+clear 
+svmat dd 
+svmat pt
+save "$directorio/_aux/did_het.dta", replace
+
 	
 				
