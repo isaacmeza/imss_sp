@@ -62,17 +62,17 @@ foreach var in  p_t p_1 e_t lg1_masa_sal_ta lg1_masa_sal_ta_1 {
 	*B-C + more municpalities
 	xi : xtreg `var'_ SP_b_p1-SP_b_p15 SP_b_p17-SP_b_p41  i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_*  [aw=pob2000] if bal_48_imss==1, fe robust cluster(cvemun)
 	matrix event_bc_`var' = J(37,1,.)	
-	matrix se_bc_`var' = J(37,1,.)		
+	matrix var_bc_`var' = J(37,1,.)		
 	forvalues j = 5/41 {
 		if `j'!=16 {
 			matrix event_bc_`var'[`j'-4,1] = _b[SP_b_p`j']
-			matrix se_bc_`var'[`j'-4,1] = (_se[SP_b_p`j'])^2
+			matrix var_bc_`var'[`j'-4,1] = (_se[SP_b_p`j'])^2
 		}
 	}
 	mat rownames event_bc_`var' = "Pre12" "Pre11" "Pre10" "Pre9" "Pre8" "Pre7" "Pre6" "Pre5" "Pre4" "Pre3" "Pre2" "omitted" "Post0" "Post1" "Post2" "Post3" "Post4" "Post5" "Post6" "Post7" "Post8" "Post9" "Post10" "Post11" "Post12" "Post13" "Post14" "Post15" "Post16"
-	mat rownames se_bc_`var' =  "Pre12" "Pre11" "Pre10" "Pre9" "Pre8" "Pre7" "Pre6" "Pre5" "Pre4" "Pre3" "Pre2" "omitted" "Post0" "Post1" "Post2" "Post3" "Post4" "Post5" "Post6" "Post7" "Post8" "Post9" "Post10" "Post11" "Post12" "Post13" "Post14" "Post15" "Post16"
+	mat rownames var_bc_`var' =  "Pre12" "Pre11" "Pre10" "Pre9" "Pre8" "Pre7" "Pre6" "Pre5" "Pre4" "Pre3" "Pre2" "omitted" "Post0" "Post1" "Post2" "Post3" "Post4" "Post5" "Post6" "Post7" "Post8" "Post9" "Post10" "Post11" "Post12" "Post13" "Post14" "Post15" "Post16"
 
-	event_plot event_bc_`var'#se_bc_`var', default_look ///
+	event_plot event_bc_`var'#var_bc_`var', default_look ///
 		graph_opt(xtitle("Quarters since SP adoption") ytitle("Average causal effect") ///
 		title("") xlabel(-12(4)16)) stub_lag(Post#) stub_lead(Pre#) together
 	graph export "$directorio/Figuras/did_event_mun_`var'.pdf", replace	
@@ -80,17 +80,17 @@ foreach var in  p_t p_1 e_t lg1_masa_sal_ta lg1_masa_sal_ta_1 {
 	*Luminosity (+ other controls) (+ quarter of implementation)
 	xi : xtreg `var' SP_b_p1-SP_b_p15 SP_b_p17-SP_b_p41 i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* sexo c.date#i.q_imp [aw=pob2000] if bal_48==1, fe cluster(cvemun)
 	matrix event_bc_`var' = J(37,1,.)	
-	matrix se_bc_`var' = J(37,1,.)		
+	matrix var_bc_`var' = J(37,1,.)		
 	forvalues j = 5/41 {
 		if `j'!=16 {
 			matrix event_bc_`var'[`j'-4,1] = _b[SP_b_p`j']
-			matrix se_bc_`var'[`j'-4,1] = (_se[SP_b_p`j'])^2
+			matrix var_bc_`var'[`j'-4,1] = (_se[SP_b_p`j'])^2
 		}
 	}
 	mat rownames event_bc_`var' = "Pre12" "Pre11" "Pre10" "Pre9" "Pre8" "Pre7" "Pre6" "Pre5" "Pre4" "Pre3" "Pre2" "omitted" "Post0" "Post1" "Post2" "Post3" "Post4" "Post5" "Post6" "Post7" "Post8" "Post9" "Post10" "Post11" "Post12" "Post13" "Post14" "Post15" "Post16"
-	mat rownames se_bc_`var' =  "Pre12" "Pre11" "Pre10" "Pre9" "Pre8" "Pre7" "Pre6" "Pre5" "Pre4" "Pre3" "Pre2" "omitted" "Post0" "Post1" "Post2" "Post3" "Post4" "Post5" "Post6" "Post7" "Post8" "Post9" "Post10" "Post11" "Post12" "Post13" "Post14" "Post15" "Post16"		
+	mat rownames var_bc_`var' =  "Pre12" "Pre11" "Pre10" "Pre9" "Pre8" "Pre7" "Pre6" "Pre5" "Pre4" "Pre3" "Pre2" "omitted" "Post0" "Post1" "Post2" "Post3" "Post4" "Post5" "Post6" "Post7" "Post8" "Post9" "Post10" "Post11" "Post12" "Post13" "Post14" "Post15" "Post16"		
 
-	event_plot event_bc_`var'#se_bc_`var', default_look ///
+	event_plot event_bc_`var'#var_bc_`var', default_look ///
 		graph_opt(xtitle("Quarters since SP adoption") ytitle("Average causal effect") ///
 		title("") xlabel(-12(4)16)) stub_lag(Post#) stub_lead(Pre#) together
 	graph export "$directorio/Figuras/did_event_flex_`var'.pdf", replace	
