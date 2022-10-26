@@ -1,6 +1,13 @@
 *Directory
-global directorio "C:\Users\isaac\Dropbox\Statistics\P27\IMSS"
-cd "C:\Users\isaac\Dropbox\Statistics\P27\IMSS\" 
+
+if "`c(username)'" == "isaac" {
+	global directorio "C:\Users\isaac\Dropbox\Statistics\P27\IMSS"
+	cd "$directorio"
+}
+if "`c(username)'" == "Roberto" {
+	global directorio "C:/Users/Roberto/ITAM/CIE/imss_sp"
+	cd "$directorio"
+}
 
 *Set scheme
 set scheme white_tableau, perm
