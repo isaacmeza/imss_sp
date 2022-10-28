@@ -8,13 +8,13 @@ version 17.0
 * Author:	Isaac M
 * Machine:	Isaac M 											
 * Date of creation:	
-* Last date of modification: July. 07, 2022
+* Last date of modification: October. 29, 2022
 * Modifications: 
 * Files used:     
 		- 
 * Files created:  
 
-* Purpose: DiD with IMSS data. Individual regressions to identify HTE
+* Purpose: DiD with IMSS data. Individual regressions to identify HTE with felxible regression and individual FE
 
 *******************************************************************************/
 */
@@ -47,137 +47,84 @@ replace size = 2 if inlist(size_cierre, 2,3)
 replace size = 3 if inlist(size_cierre, 4)
 replace size = 4 if inlist(size_cierre, 5,6,7)
 
+gen pre = 0
+replace pre = 1 if (SP_b_F16x==1 | SP_b_F12x==1 | SP_b_F8x==1)
+gen post_dd = 0
+replace post_dd = 1 if (SP_bx==1 | SP_b_L4x==1 | SP_b_L8x==1 | SP_b_L12x==1 | SP_b_L16==1)
 ********************************************************************************
 
 
+matrix post_dd = J(6,3,.)
+matrix pre = J(6,1,.)
 
-*********** REGRESSIONS *************
-*************************************
-*************************************
-eststo clear 
+******************************** IMSS ******************************************
+
+local j = 1
+
+			xi : xtreg informal i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* sexo c.date#i.q_imp pre post_dd, fe cluster(idnss)
+			
+			matrix post_dd[`j',1] =   _b[post_dd]
+			matrix post_dd[`j',2] =   _b[post_dd] - invnormal(.975)*_se[post_dd]
+			matrix post_dd[`j',3] =   _b[post_dd] + invnormal(.975)*_se[post_dd]
+			
+			test pre
+			matrix pre[`j',1] =  r(p)
+			
+			local j = `j' + 1
+
+			xi : xtreg informal i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* sexo c.date#i.q_imp pre post_dd if size==1, fe cluster(idnss)
+			
+			matrix post_dd[`j',1] =   _b[post_dd]
+			matrix post_dd[`j',2] =   _b[post_dd] - invnormal(.975)*_se[post_dd]
+			matrix post_dd[`j',3] =   _b[post_dd] + invnormal(.975)*_se[post_dd]
+			
+			test pre
+			matrix pre[`j',1] =  r(p)
+			
+			local j = `j' + 1
+
+			
+foreach var in high_wage high_labor_att { 	
+					
+			xi : xtreg informal i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* sexo c.date#i.q_imp pre post_dd if `var'==0, fe cluster(idnss)
+			
+			matrix post_dd[`j',1] =   _b[post_dd]
+			matrix post_dd[`j',2] =   _b[post_dd] - invnormal(.975)*_se[post_dd]
+			matrix post_dd[`j',3] =   _b[post_dd] + invnormal(.975)*_se[post_dd]
+			
+			test pre
+			matrix pre[`j',1] =  r(p)
+			
+			local j = `j' + 1
+			
+			xi : xtreg informal i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* sexo c.date#i.q_imp pre post_dd if `var'==1, fe cluster(idnss)
+			
+			matrix post_dd[`j',1] =   _b[post_dd]
+			matrix post_dd[`j',2] =   _b[post_dd] - invnormal(.975)*_se[post_dd]
+			matrix post_dd[`j',3] =   _b[post_dd] + invnormal(.975)*_se[post_dd]
+			
+			test pre
+			matrix pre[`j',1] =  r(p)
+			
+			local j = `j' + 1			
+		 }
+		 
+	
 
 
-*B-C specification
-eststo : xi : xtreg informal i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 , fe robust 
-		qui levelsof cvemun if e(sample)==1 
-		local num_mun = `r(r)'
-		su informal if e(sample)==1
-		estadd scalar DepVarMean = `r(mean)'
-		estadd scalar num_mun = `num_mun'	
-esttab using "$directorio/Tables/reg_results/did_ind_imss.csv", se r2 ${star} b(a2)  replace keep(SP*) scalars("DepVarMean DepVarMean" "num_mun num_mun")		
-		
-*Luminosity (+ quarter of implementation)
-eststo : xi : xtreg informal i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* sexo c.date#i.q_imp SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 , fe robust 
-		qui levelsof cvemun if e(sample)==1 
-		local num_mun = `r(r)'
-		su informal if e(sample)==1
-		estadd scalar DepVarMean = `r(mean)'
-		estadd scalar num_mun = `num_mun'	
-esttab using "$directorio/Tables/reg_results/did_ind_imss.csv", se r2 ${star} b(a2)  replace keep(SP*) scalars("DepVarMean DepVarMean" "num_mun num_mun")				
-		
-		
-*******************************			SIZE		****************************		
-forvalues tamanio = 1/4 {		
-*B-C specification
-eststo : xi : xtreg informal i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 if size==`tamanio', fe robust 
-		qui levelsof cvemun if e(sample)==1 
-		local num_mun = `r(r)'
-		su informal if e(sample)==1
-		estadd scalar DepVarMean = `r(mean)'
-		estadd scalar num_mun = `num_mun'	
-esttab using "$directorio/Tables/reg_results/did_ind_imss.csv", se r2 ${star} b(a2)  replace keep(SP*) scalars("DepVarMean DepVarMean" "num_mun num_mun")		
+mat rownames dd =  "All"  "Self-employed" "Low-wage" "High-wage" "Low labour atachment" "High labor atachment" 
+  
+mat rownames pt =  "All"  "Self-employed" "Low-wage" "High-wage" "Low labour atachment" "High labor atachment" 
+	
+	coefplot (matrix(dd[,1]), offset(0.06) ci((dd[,2] dd[,3])) msize(large) ciopts(lcolor(gs4))) , ///
+	legend(order(2 "DiD Effect") pos(6) rows(1))  xline(0)  graphregion(color(white)) 
+graph export "$directorio/Figuras/did_imss.pdf", replace
+	
 
-		
-*Luminosity (+ quarter of implementation)
-eststo : xi : xtreg informal i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* sexo c.date#i.q_imp SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 if size==`tamanio', fe robust 
-		qui levelsof cvemun if e(sample)==1 
-		local num_mun = `r(r)'
-		su informal if e(sample)==1
-		estadd scalar DepVarMean = `r(mean)'
-		estadd scalar num_mun = `num_mun'	
-esttab using "$directorio/Tables/reg_results/did_ind_imss.csv", se r2 ${star} b(a2)  replace keep(SP*) scalars("DepVarMean DepVarMean" "num_mun num_mun")		
-		
-}	
-		
-		
-*******************************		LOW WAGE	********************************
-*B-C specification
-eststo : xi : xtreg informal i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 if high_wage==0 , fe robust 
-		qui levelsof cvemun if e(sample)==1 
-		local num_mun = `r(r)'
-		su informal if e(sample)==1
-		estadd scalar DepVarMean = `r(mean)'
-		estadd scalar num_mun = `num_mun'	
-esttab using "$directorio/Tables/reg_results/did_ind_imss.csv", se r2 ${star} b(a2)  replace keep(SP*) scalars("DepVarMean DepVarMean" "num_mun num_mun")		
-
-		
-*Luminosity (+ quarter of implementation)
-eststo : xi : xtreg informal i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* sexo c.date#i.q_imp SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 if high_wage==0  , fe robust 
-		qui levelsof cvemun if e(sample)==1 
-		local num_mun = `r(r)'
-		su informal if e(sample)==1
-		estadd scalar DepVarMean = `r(mean)'
-		estadd scalar num_mun = `num_mun'	
-esttab using "$directorio/Tables/reg_results/did_ind_imss.csv", se r2 ${star} b(a2)  replace keep(SP*) scalars("DepVarMean DepVarMean" "num_mun num_mun")		
-		
-		
-*******************************		HIGH WAGE	********************************		
-*B-C specification
-eststo : xi : xtreg informal i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 if high_wage==1 , fe robust 
-		qui levelsof cvemun if e(sample)==1 
-		local num_mun = `r(r)'
-		su informal if e(sample)==1
-		estadd scalar DepVarMean = `r(mean)'
-		estadd scalar num_mun = `num_mun'	
-esttab using "$directorio/Tables/reg_results/did_ind_imss.csv", se r2 ${star} b(a2)  replace keep(SP*) scalars("DepVarMean DepVarMean" "num_mun num_mun")		
-		
-*Luminosity (+ quarter of implementation)
-eststo : xi : xtreg informal i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* sexo c.date#i.q_imp SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 if high_wage==1 , fe robust 
-		qui levelsof cvemun if e(sample)==1 
-		local num_mun = `r(r)'
-		su informal if e(sample)==1
-		estadd scalar DepVarMean = `r(mean)'
-		estadd scalar num_mun = `num_mun'			
-esttab using "$directorio/Tables/reg_results/did_ind_imss.csv", se r2 ${star} b(a2)  replace keep(SP*) scalars("DepVarMean DepVarMean" "num_mun num_mun")				
-		
-		
-*******************************		LOW ATTACHMENT	****************************
-*B-C specification
-eststo : xi : xtreg informal i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 if high_labor_att==0 , fe robust 
-		qui levelsof cvemun if e(sample)==1 
-		local num_mun = `r(r)'
-		su informal if e(sample)==1
-		estadd scalar DepVarMean = `r(mean)'
-		estadd scalar num_mun = `num_mun'	
-esttab using "$directorio/Tables/reg_results/did_ind_imss.csv", se r2 ${star} b(a2)  replace keep(SP*) scalars("DepVarMean DepVarMean" "num_mun num_mun")		
-		
-*Luminosity (+ quarter of implementation)
-eststo : xi : xtreg informal i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* sexo c.date#i.q_imp SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 if high_labor_att==0  , fe robust 
-		qui levelsof cvemun if e(sample)==1 
-		local num_mun = `r(r)'
-		su informal if e(sample)==1
-		estadd scalar DepVarMean = `r(mean)'
-		estadd scalar num_mun = `num_mun'	
-esttab using "$directorio/Tables/reg_results/did_ind_imss.csv", se r2 ${star} b(a2)  replace keep(SP*) scalars("DepVarMean DepVarMean" "num_mun num_mun")				
-		
-*******************************		HIGH ATTACHMENT	****************************	
-*B-C specification
-eststo : xi : xtreg informal i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 if high_labor_att==1 , fe robust 
-		qui levelsof cvemun if e(sample)==1 
-		local num_mun = `r(r)'
-		su informal if e(sample)==1
-		estadd scalar DepVarMean = `r(mean)'
-		estadd scalar num_mun = `num_mun'		
-esttab using "$directorio/Tables/reg_results/did_ind_imss.csv", se r2 ${star} b(a2)  replace keep(SP*) scalars("DepVarMean DepVarMean" "num_mun num_mun")		
+clear 
+svmat dd 
+svmat pt
+save "$directorio/_aux/did_imss.dta", replace
 
 		
-*Luminosity (+ quarter of implementation)
-eststo : xi : xtreg informal i.ent*date i.ent*date2 i.ent*date3 i.date lgpop x_t_* median_lum* sexo c.date#i.q_imp SP_b_F16x SP_b_F12x SP_b_F8x SP_bx SP_b_L4x SP_b_L8x SP_b_L12x SP_b_L16 if high_labor_att==1 , fe robust 
-		qui levelsof cvemun if e(sample)==1 
-		local num_mun = `r(r)'
-		su informal if e(sample)==1
-		estadd scalar DepVarMean = `r(mean)'
-		estadd scalar num_mun = `num_mun'				
-
-		
-esttab using "$directorio/Tables/reg_results/did_ind_imss.csv", se r2 ${star} b(a2)  replace keep(SP*) scalars("DepVarMean DepVarMean" "num_mun num_mun")		
+		 
