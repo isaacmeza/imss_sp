@@ -112,6 +112,8 @@ replace year = yofd(dofq(date))
 replace quarter = quarter(dofq(date))
 merge 1:1 cvemun year quarter using "Data Created\mortality_cvemundate.dta", nogen
 
+// Merge with mortality by disease
+merge 1:1 cvemun year quarter using "Data Created/base_mun_quarter_muertesXenfermedad.dta", nogen
 
 *MERGE WITH LUMINOSITY DATA
 merge 1:1 cvemun year quarter using "$directorio\Data Created\luminosity.dta", nogen keep(1 3) keepusing(median_lum sd_lum)
@@ -275,7 +277,7 @@ foreach var of varlist ta_low_wage ta_high_wage ta_soltero ta_casado {
 }
 	
 *Mortality
-foreach var of varlist total_d* {
+foreach var of varlist total_d* carcinoma-high_blood_pressure {
 	gen lg_`var' = log(`var' + 1)
 }
 
@@ -283,26 +285,26 @@ foreach var of varlist total_d* {
 *-------------------------------------------------------------------------------
 *-------------------------------------------------------------------------------
 
-*Identify municipalities that exists in all quarters from 2000-2019 
+*Identify municipalities that exists in all quarters from 2000-2014 
 cap drop ones
-gen ones = (emp_t>=1 & emp_t!=.) if year<=2019
+gen ones = (emp_t>=1 & emp_t!=.) if year<=2011
 bysort cvemun : egen txx = total(ones)
 tab txx
-gen bal_80 = (txx==80 & p_t!=.) //since 2000, 20*4// //For which there is at least 1 employer in the municipality//
+gen bal_48 = (txx==48 & p_t!=.) //since 2000, 12*4// //For which there is at least 1 employer in the municipality//
 
 *Identify municipalities that exists in all quarters from 2000-2019 with IMSS data
 cap drop ones
-gen ones = (afiliados_imss>=0 & afiliados_imss!=.) if year<=2019
+gen ones = (afiliados_imss>=0 & afiliados_imss!=.) if year<=2011
 bysort cvemun : egen tyy = total(ones)
 tab tyy
-gen bal_80_imss = (tyy==80)
+gen bal_48_imss = (tyy==48)
 
 *Identify municipalities that exists in all quarters from 2002-2019 with INEGI mortality data
 cap drop ones
-gen ones = (total_d!=.) if year<=2019
+gen ones = (total_d!=.) if year<=2011
 bysort cvemun : egen tzz = total(ones)
 tab tzz
-gen bal_80_d = (tzz==80)
+gen bal_48_d = (tzz==48)
 
 *-------------------------------------------------------------------------------
 
@@ -329,16 +331,16 @@ foreach var of varlist SP SP_b SP_c {
 	by cvemun : egen tmax = max(TT*date)
 	gen `var'_p = date - tmax	
 	
-	// Code for period before/after treatment allowing up to 7 leads/lags (7*4 = 28)
+	// Code for period before/after treatment allowing up to 7 leads/lags (6*4 = 24)
 	replace `var'_p = -28 if `var'_p<-28
-	replace `var'_p = . if `var'_p>80
+	replace `var'_p = . if `var'_p>60
 	replace `var'_p = 28 if `var'_p>28 & !missing(`var'_p)
 	drop TT tmax
 	
 	*Collapsed period of treatment
 	gen `var'_col = .
 	local k = -10
-	forvalues i = -40(4)80 {
+	forvalues i = -40(4)60 {
 		replace `var'_col = `k' if inrange(`var'_p, `i',`=`i'+3')
 		local k = `k' + 1
 	}

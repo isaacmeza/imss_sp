@@ -288,7 +288,7 @@ cap drop ones
 gen ones = (emp_t>=1 & emp_t!=.) if year<=2011
 bysort cvemun : egen txx = total(ones)
 tab txx
-gen bal_48 = (txx==48 & p_t!=.) //since 2000, 10*4// //For which there is at least 1 employer in the municipality//
+gen bal_48 = (txx==48 & p_t!=.) //since 2000, 12*4// //For which there is at least 1 employer in the municipality//
 
 *Identify municipalities that exists in all quarters from 2000-2011 with IMSS data
 cap drop ones
