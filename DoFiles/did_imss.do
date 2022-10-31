@@ -111,13 +111,23 @@ foreach var in high_wage high_labor_att {
 		 
 	
 
+matrix dd_nosig = J(6,3,.)
+forvalues j = 1/6 {
+    if  pre[`j',1] < 0.05 {
+		matrix dd_nosig[`j',1] = post_dd[`j',1] 
+		matrix dd_nosig[`j',2] = post_dd[`j',2] 
+		matrix dd_nosig[`j',3] = post_dd[`j',3] 
+	}
+}	
 
-mat rownames dd =  "All"  "Self-employed" "Low-wage" "High-wage" "Low labour atachment" "High labor atachment" 
-  
-mat rownames pt =  "All"  "Self-employed" "Low-wage" "High-wage" "Low labour atachment" "High labor atachment" 
+
+mat rownames post_dd =  "All"  "Self-employed" "Low-wage" "High-wage" "Low labour atachment" "High labor atachment" 
+mat rownames dd_nosig =  "All"  "Self-employed" "Low-wage" "High-wage" "Low labour atachment" "High labor atachment" 
+mat rownames pre =  "All"  "Self-employed" "Low-wage" "High-wage" "Low labour atachment" "High labor atachment" 
 	
-	coefplot (matrix(dd[,1]), offset(0.06) ci((dd[,2] dd[,3])) msize(large) ciopts(lcolor(gs4))) , ///
-	legend(order(2 "DiD Effect") pos(6) rows(1))  xline(0)  graphregion(color(white)) 
+	coefplot (matrix(post_dd[,1]), offset(0.06) ci((post_dd[,2] post_dd[,3])) msize(large) ciopts(lcolor(gs4))) ///
+	(matrix(dd_nosig[,1]), offset(0.06) ci((dd_nosig[,2] dd_nosig[,3])) msize(large) ciopts(lcolor(gs4))) , ///
+	legend(order(2 "DiD Effect" 4 "No parallel trends") pos(6) rows(1))  xline(0)  graphregion(color(white)) 
 graph export "$directorio/Figuras/did_imss.pdf", replace
 	
 
