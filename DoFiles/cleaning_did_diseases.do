@@ -75,7 +75,7 @@ foreach enfermedad in carcinoma obsttricas fetal diabetes recinnacid hipertensiv
 			preserve
 			keep if strpos(causa_muerte_mx, "`enfermedad'")
 			
-			collapse (count) death_`enfermedad' = deaths, by(cvemun year quarter)
+			collapse (count) `enfermedad' = deaths, by(cvemun year)
 			
 			tempfile temp_`enfermedad'
 			save `temp_`enfermedad'', replace
@@ -89,17 +89,26 @@ foreach enfermedad in obsttricas fetal diabetes recinnacid hipertensiva ///
 	epilepsia postparto hemorragprecozdelembarazo hipertensin miocardio cardaca ///
 	leucemia anemia puerperio cancermama cancerutero {
 			di in red "`enfermedad'"
-			merge 1:1 cvemun year quarter using `temp_`enfermedad''
+			merge 1:1 cvemun year using `temp_`enfermedad''
 			tab _merge
 			drop _merge
 			
-			save "Data Created/base_mun_quarter_muertesXenfermedad.dta", replace
+			save "Data Created/base_mun_year_muertesXenfermedad.dta", replace
 }
 
-foreach var of varlist death* {
+foreach var of varlist carcinoma-cancerutero {
 	replace `var' = 0 if `var' == . 
 }
 
-sort cvemun year quarter
+gen pregnancy_related = obsttricas + postparto + hemorragprecozdelembarazo + puerperio
+drop obsttricas postparto hemorragprecozdelembarazo puerperio
+
+gen newborns = fetal + recinnacid
+drop fetal recinnacid
+
+gen high_blood_pressure = hipertensiva + hipertensin + miocardio + cardaca
+drop hipertensin hipertensiva miocardio cardaca 
+
+sort cvemun year
 compress
-save "Data Created/base_mun_quarter_muertesXenfermedad.dta", replace
+save "Data Created/base_mun_year_muertesXenfermedad.dta", replace

@@ -66,6 +66,18 @@ replace ind_old = 0 if ind_old<1
 *MERGE WITH DATA FROM POPULATION 
 merge m:1 cvemun year using "Data Created\population.dta", nogen 
 replace quarter = 4 if missing(quarter)
+
+*MERGE WITH MUNICIPALITIY CHARACTERISTICS FROM THE 2000 CENSUS
+merge m:1 cvemun using "Data Original\caract_muni.dta", nogen keep(3)
+
+
+*MERGE WITH GOVERNMENT
+gen ent=int(cvemun/1000)
+merge m:1 ent year quarter using "Data Original\gob.dta", nogen keepusing(gob)
+
+encode gob, gen(government)
+drop gob
+
  
 gen date = yq(year,quarter)
 drop if missing(date)
@@ -83,22 +95,12 @@ drop logpop
 
 drop if year==2020
 
-*MERGE WITH MUNICIPALITIY CHARACTERISTICS FROM THE 2000 CENSUS
-merge m:1 cvemun using "Data Original\caract_muni.dta", nogen keep(3)
-
-
-*MERGE WITH GOVERNMENT
-gen ent=int(cvemun/1000)
-merge m:1 ent year quarter using "Data Original\gob.dta", nogen keepusing(gob)
-
-encode gob, gen(government)
-drop gob
-
 
 *PANEL DATASET
 drop if missing(cvemun)
 drop if missing(date)
 sort cvemun year quarter
+
 xtset cvemun date
 *Balance panel
 gen sample1 = 1
@@ -113,10 +115,10 @@ replace quarter = quarter(dofq(date))
 merge 1:1 cvemun year quarter using "Data Created\mortality_cvemundate.dta", nogen
 
 // Merge with mortality by disease
-merge 1:1 cvemun year quarter using "Data Created/base_mun_quarter_muertesXenfermedad.dta", nogen
+merge m:1 cvemun year using "Data Created/base_mun_year_muertesXenfermedad.dta", nogen
 
 *MERGE WITH LUMINOSITY DATA
-merge 1:1 cvemun year quarter using "$directorio\Data Created\luminosity.dta", nogen keep(1 3) keepusing(median_lum sd_lum)
+merge 1:1 cvemun year quarter using "$directorio\Data Created\luminosity.dta", nogen keep(1 3) keepusing(median_lum sd_lum mean_lum)
 
 *Epolation of luminosity
 bysort cvemun : ipolate median_lum date, gen(median_lum_) epolate
@@ -161,7 +163,7 @@ foreach var of varlist asegurados1 asegurados2 asegurados3 asegurados4 asegurado
 
 *Imputation deaths
 foreach var of varlist total_d* {
-	replace `var' = 0 if missing(`var') & inrange(year,2000,2019) 
+	replace `var' = 0 if missing(`var') & inrange(year, 2000, 2019) 
 }
 
 *-------------------------------------------------------------------------------
@@ -285,26 +287,26 @@ foreach var of varlist total_d* carcinoma-high_blood_pressure {
 *-------------------------------------------------------------------------------
 *-------------------------------------------------------------------------------
 
-*Identify municipalities that exists in all quarters from 2000-2014 
+*Identify municipalities that exists in all quarters from 2000-2018 
 cap drop ones
-gen ones = (emp_t>=1 & emp_t!=.) if year<=2011
+gen ones = (emp_t>=1 & emp_t!=.) if year<=2018
 bysort cvemun : egen txx = total(ones)
 tab txx
-gen bal_48 = (txx==48 & p_t!=.) //since 2000, 12*4// //For which there is at least 1 employer in the municipality//
+gen bal_48 = (txx==48 & p_t!=.) //since 2000, 18*4// //For which there is at least 1 employer in the municipality//
 
 *Identify municipalities that exists in all quarters from 2000-2019 with IMSS data
 cap drop ones
-gen ones = (afiliados_imss>=0 & afiliados_imss!=.) if year<=2011
+gen ones = (afiliados_imss>=0 & afiliados_imss!=.) if year<=2018
 bysort cvemun : egen tyy = total(ones)
 tab tyy
-gen bal_48_imss = (tyy==48)
+gen bal_64_imss = (tyy==64)
 
 *Identify municipalities that exists in all quarters from 2002-2019 with INEGI mortality data
 cap drop ones
-gen ones = (total_d!=.) if year<=2011
+gen ones = (total_d!=.) if year<=2018
 bysort cvemun : egen tzz = total(ones)
 tab tzz
-gen bal_48_d = (tzz==48)
+gen bal_76_d = (tzz==76)
 
 *-------------------------------------------------------------------------------
 
@@ -331,10 +333,10 @@ foreach var of varlist SP SP_b SP_c {
 	by cvemun : egen tmax = max(TT*date)
 	gen `var'_p = date - tmax	
 	
-	// Code for period before/after treatment allowing up to 7 leads/lags (6*4 = 24)
-	replace `var'_p = -28 if `var'_p<-28
-	replace `var'_p = . if `var'_p>60
-	replace `var'_p = 28 if `var'_p>28 & !missing(`var'_p)
+	// Code for period before/after treatment allowing up to 8 leads/lags (8*4 = 32)
+	replace `var'_p = -32 if `var'_p<-32
+	replace `var'_p = . if `var'_p>40
+	replace `var'_p = 32 if `var'_p>32 & !missing(`var'_p)
 	drop TT tmax
 	
 	*Collapsed period of treatment
@@ -349,7 +351,7 @@ foreach var of varlist SP SP_b SP_c {
 sort cvemun date
 foreach var in SP SP_b SP_c {
 	*Lags and forward (Ever treated)
-	forvalues j = 4 8 to 28 {
+	forvalues j = 4 8 to 32 {
 		gen `var'_L`j' = L`j'.`var'
 		replace `var'_L`j' = 0 if missing(`var'_L`j')
 		gen `var'_F`j' = F`j'.`var'
@@ -364,15 +366,15 @@ foreach var in SP SP_b SP_c {
 	drop yyy
 
 	*Lags and forward (year of treatment)
-	forvalues j = 4 8 to 28 {
+	forvalues j = 4 8 to 32 {
 		gen `var'_L`j'x = L`j'.`var'x
 		replace `var'_L`j'x = 0 if missing(`var'_L`j'x)
 		gen `var'_F`j'x = F`j'.`var'x
 		replace `var'_F`j'x = 0 if missing(`var'_F`j'x)
 	}
 
-	*Define lag variable previous to 7 years as 1
-	replace `var'_F28x = 1 if `var'_F28==0
+	*Define lag variable previous to 8 years as 1
+	replace `var'_F32x = 1 if `var'_F32==0
 }
 
 *Covariates - characteristics x time
