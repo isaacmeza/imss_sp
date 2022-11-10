@@ -289,7 +289,7 @@ foreach var of varlist total_d* carcinoma-high_blood_pressure {
 
 *Identify municipalities that exists in all quarters from 2000-2018 
 cap drop ones
-gen ones = (emp_t>=1 & emp_t!=.) if year<=2018
+gen ones = (emp_t>=1 & emp_t!=.) if year<=2011
 bysort cvemun : egen txx = total(ones)
 tab txx
 gen bal_48 = (txx==48 & p_t!=.) //since 2000, 18*4// //For which there is at least 1 employer in the municipality//
@@ -335,7 +335,7 @@ foreach var of varlist SP SP_b SP_c {
 	
 	// Code for period before/after treatment allowing up to 8 leads/lags (8*4 = 32)
 	replace `var'_p = -32 if `var'_p<-32
-	replace `var'_p = . if `var'_p>40
+	// replace `var'_p = . if `var'_p>40
 	replace `var'_p = 32 if `var'_p>32 & !missing(`var'_p)
 	drop TT tmax
 	
