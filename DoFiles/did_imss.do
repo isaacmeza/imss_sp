@@ -127,7 +127,7 @@ mat rownames pre =  "All"  "Self-employed" "Low-wage" "High-wage" "Low labour at
 	
 	coefplot (matrix(post_dd[,1]), offset(0.06) ci((post_dd[,2] post_dd[,3])) msize(large) ciopts(lcolor(gs4))) ///
 	(matrix(dd_nosig[,1]), offset(0.06) ci((dd_nosig[,2] dd_nosig[,3])) msize(large) ciopts(lcolor(gs4))) , ///
-	legend(order(2 "DiD Effect" 4 "No parallel trends") pos(6) rows(1))  xline(0)  graphregion(color(white)) 
+	legend(order(2 "Probability of exit IMSS" 4 "No parallel trends") pos(6) rows(1))  xline(0)  graphregion(color(white)) 
 graph export "$directorio/Figuras/did_imss.pdf", replace
 	
 

@@ -106,7 +106,7 @@ mat rownames dd =  "All"  "Self-employed" "Low-wage" "High-wage" "Low labour ata
 mat rownames pt =  "All"  "Self-employed" "Low-wage" "High-wage" "Low labour atachment" "High labor atachment" 
 	
 	coefplot (matrix(dd[,1]), offset(0.06) ci((dd[,2] dd[,3])) msize(large) ciopts(lcolor(gs4))) , ///
-	legend(order(2 "DiD Effect") pos(6) rows(1))  xline(0)  graphregion(color(white)) 
+	legend(order(2 "Probability of exit IMSS") pos(6) rows(1))  xline(0)  graphregion(color(white)) 
 graph export "$directorio/Figuras/did_ind.pdf", replace
 	
 
