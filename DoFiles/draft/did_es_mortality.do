@@ -116,8 +116,8 @@ foreach var of varlist lg_total_d lg_total_d_cov_sp lg_total_d_cov_isp lg_carcin
 		
 	di in red "Doing flexible specification"
 	*Luminosity (+ other controls) (+ quarter of implementation)
-	xi : xtreg `var' SP_b_col1-SP_b_col4 SP_b_col6-SP_b_col13 i.ent*imp_yr i.ent*imp_yr2 i.ent*imp_yr3 i.imp_yr lgpop x_t_* if bal_68==1 [aw=pob2000] , fe cluster(cvemun)
-	//xi : xtreg `var' SP_b_col1-SP_b_col7 SP_b_col9-SP_b_col17 i.ent*imp_yr i.ent*imp_yr2 i.ent*imp_yr3 i.imp_yr lgpop x_t_* mean_lum* sexo c.date#i.imp_yr [aw=pob2000] if bal_48 == 1, fe cluster(cvemun)
+	//xi : xtreg `var' SP_b_col1-SP_b_col4 SP_b_col6-SP_b_col13 i.ent*imp_yr i.ent*imp_yr2 i.ent*imp_yr3 i.imp_yr lgpop x_t_* if bal_68==1 [aw=pob2000] , fe cluster(cvemun)
+	xi : xtreg `var' i.ent*imp_yr i.ent*imp_yr2 i.ent*imp_yr3 i.imp_yr lgpop x_t_* mean_lum* sexo c.date#i.imp_yr SP_b_col1-SP_b_col4 SP_b_col6-SP_b_col13 [aw=pob2000] if bal_68 == 1, fe cluster(cvemun)
 	matrix event_bc_`var' = J(13,1,.)	
 	matrix var_bc_`var' = J(13,1,.)		
 	forvalues j = 1/13 {
@@ -134,13 +134,13 @@ foreach var of varlist lg_total_d lg_total_d_cov_sp lg_total_d_cov_isp lg_carcin
 
 	event_plot event_bc_`var'#var_bc_`var', default_look ///
 		graph_opt(xtitle("Years since SP adoption") ytitle("Average causal effect") ///
-		title("") xlabel(-5(1)7)) stub_lag(Post#) stub_lead(Pre#) together
+		title("") xlabel(-5(1)6)) stub_lag(Post#) stub_lead(Pre#) together
 	graph export "$directorio/Figuras/did_event_flex_`var'_mort.pdf", replace	
 	
 	}
 		di in red "Doing de Chaisemartin and D'Haultfoeuille"
 	*de Chaisemartin, C and D'Haultfoeuille, X (2020b).  Difference-in-Differences Estimators of Intertemporal Treatment Effects.
-	did_multiplegt `var' cvemun imp_yr SP_b_col if bal_68_d==1, robust_dynamic dynamic(7) placebo(5) breps(3) controls(lgpop x_t_* mean_lum* sexo) weight(pob2000) cluster(cvemun)
+	did_multiplegt `var' cvemun imp_yr SP_b if bal_68_d==1, robust_dynamic dynamic(7) placebo(5) breps(3) controls(lgpop x_t_* mean_lum* sexo) weight(pob2000) cluster(cvemun)
 
 	event_plot e(estimates)#e(variances), default_look ///
 		graph_opt(xtitle("Years since SP adoption") ytitle("Average causal effect") ///
