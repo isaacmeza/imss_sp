@@ -110,7 +110,7 @@ drop ent_d1
 *************************************
 
 
-foreach var of varlist lg_total_d lg_total_d_cov_sp lg_total_d_cov_isp lg_carcinoma-lg_high_blood_pressure {
+foreach var of varlist lg_total_d lg_total_d_cov_sp lg_total_d_cov_isp lg_anemia lg_cancermama lg_cancerutero lg_carcinoma lg_diabetes lg_epilepsia lg_inmunodeficiencia lg_leucemia _lg_newborns lg_pregnancy_related lg_high_blood_pressure {
 
 	if (`flexible' == 1) {
 		
