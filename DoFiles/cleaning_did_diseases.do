@@ -70,7 +70,7 @@ replace causa_muerte_mx = "cancerutero" if causa_muerte_mx == "tumor maligno del
 
 foreach enfermedad in carcinoma obsttricas fetal diabetes recinnacid hipertensiva ///
 	epilepsia postparto hemorragprecozdelembarazo hipertensin miocardio cardaca ///
-	leucemia anemia puerperio cancermama cancerutero {
+	leucemia anemia puerperio cancermama cancerutero inmunodeficiencia {
 		
 			preserve
 			keep if strpos(causa_muerte_mx, "`enfermedad'")
@@ -87,7 +87,7 @@ foreach enfermedad in carcinoma obsttricas fetal diabetes recinnacid hipertensiv
 use `temp_carcinoma', clear
 foreach enfermedad in obsttricas fetal diabetes recinnacid hipertensiva ///
 	epilepsia postparto hemorragprecozdelembarazo hipertensin miocardio cardaca ///
-	leucemia anemia puerperio cancermama cancerutero {
+	leucemia anemia puerperio cancermama cancerutero inmunodeficiencia {
 			di in red "`enfermedad'"
 			merge 1:1 cvemun year using `temp_`enfermedad''
 			tab _merge

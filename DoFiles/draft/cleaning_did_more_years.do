@@ -279,7 +279,7 @@ foreach var of varlist ta_low_wage ta_high_wage ta_soltero ta_casado {
 }
 	
 *Mortality
-foreach var of varlist total_d* carcinoma-high_blood_pressure {
+foreach var of varlist total_d* anemia cancermama cancerutero carcinoma diabetes epilepsia inmunodeficiencia leucemia newborns pregnancy_related high_blood_pressure {
 	gen lg_`var' = log(`var' + 1)
 }
 

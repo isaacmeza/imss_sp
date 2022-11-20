@@ -53,7 +53,7 @@ restore
 *Period of implementation dummies
 tab SP_b_col, gen(SP_b_col)
 
-collapse (sum) total_d* carcinoma-high_blood_pressure (mean) x_t_* mean_lum sexo (min) date if bal_68_d==1, by(cvemun SP_b_col*)
+collapse (sum) total_d* anemia cancermama cancerutero carcinoma diabetes epilepsia inmunodeficiencia leucemia newborns pregnancy_related high_blood_pressure (mean) x_t_* mean_lum sexo (min) date if bal_68_d==1, by(cvemun SP_b_col*)
 
 merge 1:1 cvemun date using `aux_vars', nogen keep(3)
 
@@ -63,7 +63,7 @@ keep if year <= 2016
 foreach var of varlist total_d* {
 	replace `var' = 0 if missing(`var') & inrange(year, 2000, 2019) 
 }
-foreach var of varlist total_d* carcinoma-high_blood_pressure {
+foreach var of varlist total_d* anemia cancermama cancerutero carcinoma diabetes epilepsia inmunodeficiencia leucemia newborns pregnancy_related high_blood_pressure {
 	gen lg_`var' = log(`var' + 1)
 }
 
@@ -71,7 +71,7 @@ gen ent = floor(cvemun/1000)
 
 keep SP_b* cvemun ent date year quarter mean_lum x_t_* lgpop pob2000 bal_48* bal_68* /// treatvar & controls
 		lg_total_d* /// mortality dep var
-		lg_carcinoma-lg_high_blood_pressure /// moartality on certain diseases
+		lg_anemia lg_cancermama lg_cancerutero lg_carcinoma lg_diabetes lg_epilepsia lg_inmunodeficiencia lg_leucemia lg_newborns lg_pregnancy_related lg_high_blood_pressure /// moartality on certain diseases
 		sexo // other vars
 		
 *Year of implementation
@@ -110,7 +110,7 @@ drop ent_d1
 *************************************
 
 
-foreach var of varlist lg_total_d lg_total_d_cov_sp lg_total_d_cov_isp lg_anemia lg_cancermama lg_cancerutero lg_carcinoma lg_diabetes lg_epilepsia lg_inmunodeficiencia lg_leucemia _lg_newborns lg_pregnancy_related lg_high_blood_pressure {
+foreach var of varlist lg_total_d lg_total_d_cov_sp lg_total_d_cov_isp lg_anemia lg_cancermama lg_cancerutero lg_carcinoma lg_diabetes lg_epilepsia lg_inmunodeficiencia lg_leucemia lg_newborns lg_pregnancy_related lg_high_blood_pressure {
 
 	if (`flexible' == 1) {
 		
@@ -140,7 +140,7 @@ foreach var of varlist lg_total_d lg_total_d_cov_sp lg_total_d_cov_isp lg_anemia
 	}
 		di in red "Doing de Chaisemartin and D'Haultfoeuille"
 	*de Chaisemartin, C and D'Haultfoeuille, X (2020b).  Difference-in-Differences Estimators of Intertemporal Treatment Effects.
-	did_multiplegt `var' cvemun imp_yr SP_b if bal_68_d==1, robust_dynamic dynamic(7) placebo(5) breps(3) controls(lgpop x_t_* mean_lum* sexo) weight(pob2000) cluster(cvemun)
+	did_multiplegt `var' cvemun imp_yr SP_b if bal_68_d==1, robust_dynamic dynamic(7) placebo(5) breps(10) controls(lgpop x_t_* mean_lum* sexo) weight(pob2000) cluster(cvemun)
 
 	event_plot e(estimates)#e(variances), default_look ///
 		graph_opt(xtitle("Years since SP adoption") ytitle("Average causal effect") ///
