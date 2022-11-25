@@ -279,7 +279,7 @@ foreach var of varlist ta_low_wage ta_high_wage ta_soltero ta_casado {
 }
 	
 *Mortality
-foreach var of varlist total_d* carcinoma-high_blood_pressure {
+foreach var of varlist total_d* anemia cancermama cancerutero carcinoma diabetes epilepsia inmunodeficiencia leucemia newborns pregnancy_related high_blood_pressure {
 	gen lg_`var' = log(`var' + 1)
 }
 
@@ -301,12 +301,12 @@ bysort cvemun : egen tyy = total(ones)
 tab tyy
 gen bal_64_imss = (tyy==64)
 
-*Identify municipalities that exists in all quarters from 2000-2016 with INEGI mortality data
+*Identify municipalities that exists in all quarters from 2000-2018 with INEGI mortality data
 cap drop ones
-gen ones = (total_d!=.) if year<=2016
+gen ones = (total_d!=.) if year<=2018
 bysort cvemun : egen tzz = total(ones)
 tab tzz
-gen bal_68_d = (tzz==68)
+gen bal_76_d = (tzz==76)
 
 *-------------------------------------------------------------------------------
 
@@ -333,10 +333,10 @@ foreach var of varlist SP SP_b SP_c {
 	by cvemun : egen tmax = max(TT*date)
 	gen `var'_p = date - tmax	
 	
-	// Code for period before/after treatment allowing up to 5 years of leads and 7 years of lags 
-	replace `var'_p = -20 if `var'_p<-20
-	// replace `var'_p = . if `var'_p>40
-	replace `var'_p = 28 if `var'_p>28 & !missing(`var'_p)
+	// Code for period before/after treatment allowing up to 6 years of leads and 8 years of lags 
+	replace `var'_p = -24 if `var'_p<-24
+	replace `var'_p = . if `var'_p>36
+	replace `var'_p = 32 if `var'_p>32 & !missing(`var'_p)
 	drop TT tmax
 	
 	*Collapsed period of treatment
@@ -351,11 +351,11 @@ foreach var of varlist SP SP_b SP_c {
 sort cvemun date
 foreach var in SP SP_b SP_c {
 	*Lags and forward (Ever treated)
-	forvalues j = 4 8 to 28 {
+	forvalues j = 4 8 to 32 {
 		gen `var'_L`j' = L`j'.`var'
 		replace `var'_L`j' = 0 if missing(`var'_L`j')
 	}
-	forvalues j = 4 8 to 20 {
+	forvalues j = 4 8 to 24 {
 		gen `var'_F`j' = F`j'.`var'
 		replace `var'_F`j' = 1 if missing(`var'_F`j')
 	}	
@@ -368,17 +368,17 @@ foreach var in SP SP_b SP_c {
 	drop yyy
 
 	*Lags and forward (year of treatment)
-	forvalues j = 4 8 to 28 {
+	forvalues j = 4 8 to 32 {
 		gen `var'_L`j'x = L`j'.`var'x
 		replace `var'_L`j'x = 0 if missing(`var'_L`j'x)
 	}
-	forvalues j = 4 8 to 20 {
+	forvalues j = 4 8 to 24 {
 		gen `var'_F`j'x = F`j'.`var'x
 		replace `var'_F`j'x = 0 if missing(`var'_F`j'x)
 	}
 
-	*Define lag variable previous to 5 years as 1
-	replace `var'_F20x = 1 if `var'_F20==0
+	*Define lag variable previous to 6 years as 1
+	replace `var'_F24x = 1 if `var'_F24==0
 }
 
 *Covariates - characteristics x time
