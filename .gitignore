@@ -48,7 +48,7 @@ vignettes/*.pdf
 /DB/**
 
 /_aux/
-/_aux/**
+/_aux/*.*
 
 
 #Dont ignore public final datasets
@@ -61,7 +61,7 @@ vignettes/*.pdf
 /Data Private/**
 
 /Data Created/
-/Data Created/**
+/Data Created/*.*
 
 #Dont ignore public final datasets
 !Data Created/base_hh_year_health_expenditure.dta

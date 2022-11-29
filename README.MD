@@ -1,7 +1,6 @@
-This is a (short) documentation for the project  
 
 # - Did Seguro Popular Reduce Formal Jobs?
-# By Enrique Seira, Isaac Meza, Eduardo González-Pier, & Eduardo Alcaraz
+### By Enrique Seira, Isaac Meza, Eduardo González-Pier, & Eduardo Alcaraz
 
 
 This README includes the relevant structure of the project in order to replicate the paper "Did Seguro Popular Reduce Formal Jobs?"
