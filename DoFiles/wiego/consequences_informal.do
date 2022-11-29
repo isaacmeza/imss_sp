@@ -20,12 +20,11 @@ version 17.0
 *******************************************************************************/
 */
 
-/*
+
 use "$directorio\Data Created\sdemt_enoe.dta", clear
 merge m:1 year quarter ent mun using  "$directorio\Data Created\luminosity.dta", keep(1 3)
 merge 1:1 cd_a ent con v_sel n_hog h_mud n_ren year quarter using "$directorio\Data Created\coe1t_enoe.dta", nogen
-*/
-use "$directorio\_aux\master.dta", clear
+
 
 label copy scian new_scian, replace
 label define new_scian 23 "Agriculture & Livestock" 24 "Mining" 25 "Manufacturing" 26 "Construction" 27 "Utilities" 28 "Retail, restaurants & hotels" 29 "Transportation, Storage & communication" 30 "Financial services" 31 "Personal & social services" 32 "Insufficiently specified", add

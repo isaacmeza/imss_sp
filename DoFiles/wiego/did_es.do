@@ -9,12 +9,12 @@ version 17.0
 * Machine:	Isaac M 											
 * Date of creation:	July. 28, 2022
 * Last date of modification: Oct. 10, 2022
-* Modifications: Use event_plot and keep only result for e_t p_t p_1.
+* Modifications: Use event_plot and keep only result for e_t p_t p_1 & wages.
 * Files used:     
 		- 
 * Files created:  
 
-* Purpose: 
+* Purpose: Create event studies for the introduction of SP and its impact in employment and wages
 
 *******************************************************************************/
 */ 

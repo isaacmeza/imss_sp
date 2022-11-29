@@ -50,11 +50,27 @@ vignettes/*.pdf
 /_aux/
 /_aux/**
 
+
+#Dont ignore public final datasets
+!/_aux/mexmunicoord.dta
+!/_aux/mexmunidb.dta
+!/_aux/mexstatecoord.dta
+
+
 /Data Private/
 /Data Private/**
 
 /Data Created/
 /Data Created/**
+
+#Dont ignore public final datasets
+!/Data Created/base_hh_year_health_expenditure.dta
+!/Data Created/coe1t_enoe.dta
+!/Data Created/derechohabiencia_2000_2020.dta
+!/Data Created/DiD_BC.dta
+!/Data Created/DiD_DB.dta
+!/Data Created/luminosity.dta
+!/Data Created/sdemt_enoe.dta
 
 /Data Original/
 /Data Original/**

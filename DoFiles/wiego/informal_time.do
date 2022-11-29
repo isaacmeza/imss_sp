@@ -46,9 +46,6 @@ gen byte nosat = (p4g!=3) if p4g!=9 & !missing(p4g)
 gen byte class_trab = informal
 replace class_trab = 2 if missing(class_trab) & clase1==1
 
-// PEA
-gen byte pea = (clase1==1) & eda > 14 if !missing(eda) & !missing(clase1)
-gen byte population_ov_14 = (eda > 14) if !missing(eda)
 
 ***********************************
 **** 	      Graphs		  *****
@@ -57,27 +54,12 @@ gen byte population_ov_14 = (eda > 14) if !missing(eda)
 replace informal = (class_trab==1) if !missing(class_trab)
 gen formal = (class_trab==0) if !missing(class_trab)
 
-collapse (mean) formal informal noimss nosat (sum) pea population_ov_14 [fw=fac], by(date)
-
-gen lab_force = pea/population_ov_14
+collapse (mean) formal informal noimss nosat [fw=fac], by(date)
 
 gen formal_m = informal + formal
 gen zero = 0
 gen uno = 1
 
-gen unemployed = 1 - formal_m
-
-twoway (rarea informal zero date if date>=`=yq(2005,1)', color(navy%20)) ///
-	(rarea formal_m informal date if date>=`=yq(2005,1)', color(maroon%20)) ///
-	(rarea uno formal_m date, color(dkgreen%20)) ///
-	(line noimss date, lwidth(medthick) lcolor(blue)) ///
-	(line nosat date, lwidth(medthick) lcolor(black)) ///
-	, legend(order(1 "Informal" 2 "Formal" 3 "Unemployed" 4 "No IMSS" 5 "No SAT") size(small) rows(2) pos(6)) graphregion(color(white)) ///
-	xtitle("") xlabel(`=yq(2005,1)'(8)224,format(%tq) labsize(small)) 
-graph export "$directorio/Figuras/informal_time.pdf", replace	
-
-// Roberto added this --------------------------------------------------------
-// Plot: Unemployed, labour force participation and No IMSS
 twoway (line noimss date, lwidth(medthick) lcolor(navy%80)) ///
 	   (line unemployed date, lwidth(medthick) lcolor(dkgreen%80)) ///
 	   (line lab_force date, lwidth(medthick) lcolor(maroon%80)), ///
@@ -88,4 +70,5 @@ twoway (line noimss date, lwidth(medthick) lcolor(navy%80)) ///
 	   graphregion(color(white)) ///
 	   xtitle("") xlabel(`=yq(2005,1)'(8)224, format(%tq) labsize(small)) 
 graph export "$directorio/Figuras/unemp_noimss_labforce.pdf", replace
+
 

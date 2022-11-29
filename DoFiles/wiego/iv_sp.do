@@ -45,38 +45,9 @@ gen median_lum3 = median_lum2*median_lum
 vl create instruments_c = (total_clues clave_institucion nivel_atencion_3 nivel_atencion_4 totaldeconsultorios totaldecamas)
 vl create instruments = (dummy_gov1 dummy_gov2)
 
-
-eststo clear
-foreach var in p_t_ p_1_ e_t_  /// imss consolidated
-		 lg1_masa_sal_ta /// asg
-		  {
-	*Pre-time trends
-	gen trend_`var' = `var' - L.`var'
-
-	eststo : reg trend_`var' $instruments_c $instruments lgpop median_lum* sexo  x_t_* i.date if inrange(date,yq(2000,1),yq(2003,4)) & bal_48==1, vce(cluster cvemun)
-	cap test $instruments_c $instruments 
-	estadd scalar Fstat = `e(F)'
-	estadd scalar pval = `r(p)'
-	
-	eststo : reghdfe trend_`var' $instruments_c $instruments lgpop median_lum* sexo  x_t_* i.date if inrange(date,yq(2000,1),yq(2003,4)) & bal_48==1, absorb(cvemun) vce(cluster cvemun) 
-	cap test $instruments_c $instruments 
-	estadd scalar Fstat = `e(F)'
-	estadd scalar pval = `r(p)'	
-	
-	qui cvlasso trend_`var' $instruments $instruments_c if inrange(date,yq(2000,1),yq(2003,4)) & bal_48==1, fe
-	qui lasso2 trend_`var' $instruments $instruments_c if inrange(date,yq(2000,1),yq(2003,4)) & bal_48==1, l(`lopt') fe 
-	eststo : reghdfe trend_`var' `e(selected)' lgpop median_lum* sexo x_t_* i.date if inrange(date,yq(2000,1),yq(2003,4)) & bal_48==1, absorb(cvemun) vce(cluster cvemun)
-	cap test `e(selected)' 
-	estadd scalar Fstat = `e(F)'
-	cap estadd scalar pval = `r(p)'	
-}
-	
-esttab using "$directorio/Tables/reg_results/pretime_trends_instrument_1q.csv", se r2 ${star} b(a2)  replace keep($instruments_c $instruments lgpop median_lum* sexo ) scalars("Fstat Fstat" "pval pval")	
-	
 	
 eststo clear
 foreach var in  p_t_ p_1_ e_t_  /// imss consolidated
-		 lg1_masa_sal_ta /// asg
 		  {
 	*Pre-time trends	
 	gen trend4_`var' = `var' - L4.`var'
@@ -106,7 +77,7 @@ esttab using "$directorio/Tables/reg_results/pretime_trends_instrument_4q.csv", 
 *Panel IV
 
 eststo clear
-foreach var of varlist p_t_ p_1_ e_t_ lg1_masa_sal_ta* {
+foreach var of varlist p_t_ p_1_ e_t_  {
 	eststo : xi : xtivreg2 `var' lgpop median_lum* sexo  x_t_* i.date1 (log_ind = $instruments_c $instruments) [aw=pob2000] if inrange(date,yq(2004,1),yq(2009,4)) & bal_48_imss==1, fe cluster(cvemun) 
 	qui levelsof cvemun if e(sample)==1 
 	local num_mun = `r(r)'
@@ -183,7 +154,6 @@ graph export "$directorio/Figuras/IV_FS.pdf", replace
 
 
 foreach var of varlist p_t_ p_1_ e_t_  /// B-C
-		 lg1_masa_sal_ta* /// asg
 		  {
 	preserve
 	
