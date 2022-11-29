@@ -47,11 +47,10 @@ vignettes/*.pdf
 /DB/
 /DB/**
 
-/_aux/
-/_aux/*.*
 
+_aux/*
 
-#Dont ignore public final datasets
+# Whitelist public final datasets
 !_aux/mexmunicoord.dta
 !_aux/mexmunidb.dta
 !_aux/mexstatecoord.dta
@@ -60,10 +59,10 @@ vignettes/*.pdf
 /Data Private/
 /Data Private/**
 
-/Data Created/
-/Data Created/*.*
 
-#Dont ignore public final datasets
+Data Created/*
+
+# Whitelist public final datasets
 !Data Created/base_hh_year_health_expenditure.dta
 !Data Created/coe1t_enoe.dta
 !Data Created/derechohabiencia_2000_2020.dta
