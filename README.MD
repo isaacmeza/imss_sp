@@ -14,6 +14,9 @@ Folders structure of the project is as follows :
 	- sdemt_enoe.dta : This is the sdemt module of the ENOE. Data is at the individual-quarter level.
 	- coe1t_enoe.dta : This is the coe1t module of the ENOE. Data is at the individual-quarter level.
 	- luminosity.dta : Luminosity dataset. Observations are at the municipality-quarter level.
+	- base_hh_year_health_expenditure.dta : Data on health expenditure at the household-year level. Data are obtained through the household (hogares) module from ENIGH.
+	- derechohabiencia_2000_2020.dta : Data of insurance affiliation (as percentage) per institution-year. The data are obtained through the 2000, 2010 and 2020 census & the 2005 and 2015 intercensal data.
+
 
 	It is important to note that the following datasets are not provided due to confidentiality reasons: 
 
