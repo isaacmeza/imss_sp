@@ -47,7 +47,6 @@ vignettes/*.pdf
 /DB/
 /DB/**
 
-
 _aux/*
 
 # Whitelist public final datasets
